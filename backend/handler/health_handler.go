@@ -1,23 +1,27 @@
 package handler
 
 import (
-	"encoding/json"
+	"neighbor_help/contract"
 	"net/http"
 
-	"github.com/your-org/your-app/contract"
+	"github.com/gin-gonic/gin"
 )
 
 type HealthHandler struct {
 	service contract.HealthService
 }
 
-func NewHealthHandler(service contract.HealthService) *HealthHandler {
-	return &HealthHandler{service: service}
+func NewHealthHandler(svc contract.HealthService) *HealthHandler {
+	return &HealthHandler{
+		service: svc,
+	}
 }
 
-func (h *HealthHandler) GetHealth(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{
-		"status": h.service.GetStatus(),
+func (h *HealthHandler) GetStatus(c *gin.Context) {
+	service := h.service.GetStatus()
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"message": service,
 	})
 }

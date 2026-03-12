@@ -1,7 +1,7 @@
 package contract
 
-type HealthRepository interface {
-	GetStatus() string
+type Service struct {
+	HealthService HealthService
 }
 
 type HealthService interface {

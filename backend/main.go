@@ -1,6 +1,6 @@
 package main
 
-import "github.com/your-org/your-app/cmd/app"
+import "neighbor_help/cmd/app"
 
 func main() {
 	app.Run()
