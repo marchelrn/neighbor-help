@@ -14,7 +14,9 @@ type migration interface {
 }
 
 func getMigrations() []migration {
-	return []migration{}
+	return []migration{
+		getCreateUsersTable(),
+	}
 }
 
 func checkDuplicateMigrationNames(migrations []migration) {
@@ -35,7 +37,7 @@ func Up(db *sql.DB) {
 
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS migrations (
-		name VARCHAR(255) PRIMARY KEY,	
+		name VARCHAR(255) PRIMARY KEY,
 		applied_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)
 	`)

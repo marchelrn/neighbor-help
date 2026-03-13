@@ -47,6 +47,7 @@ func Production() string {
 		log.Println("Using local database")
 		return LocalDB()
 	}
+	log.Println("Using production database")
 	db_url := os.Getenv("DB_URL")
 	if db_url == "" {
 		log.Fatal("DB_URL environment variable is not set")
