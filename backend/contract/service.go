@@ -1,9 +1,9 @@
 package contract
 
 type Service struct {
-	HealthService HealthService
+	Health HealthService
 }
 
 type HealthService interface {
-	GetStatus() string
+	GetStatus() (string, error)
 }

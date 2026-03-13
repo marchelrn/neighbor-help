@@ -5,5 +5,5 @@ type Repository struct {
 }
 
 type HealthRepository interface {
-	GetStatus() string
+	GetStatus() (string, error)
 }

@@ -46,7 +46,8 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 	defaultConfig.ExposeHeaders = []string{"Content-Length"}
 	r.Use(cors.New(defaultConfig))
 
-	healthController := handler.NewHealthHandler(s.HealthService)
+	healthController := &handler.HealthController{}
+	healthController.InitService(s)
 
 	api := r.Group("/")
 	{

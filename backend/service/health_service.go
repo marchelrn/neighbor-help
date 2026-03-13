@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"neighbor_help/contract"
 )
 
@@ -14,7 +15,10 @@ func implHealthService(repo contract.HealthRepository) *HealthService {
 	}
 }
 
-func (h *HealthService) GetStatus() string {
-	status := h.HealthRepository.GetStatus()
-	return status
+func (h *HealthService) GetStatus() (string, error) {
+	status, err := h.HealthRepository.GetStatus()
+	if err != nil {
+		return "", fmt.Errorf("failed to get health status: %w", err)
+	}
+	return status, nil
 }
