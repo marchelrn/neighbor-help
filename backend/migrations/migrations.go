@@ -16,6 +16,9 @@ type migration interface {
 func getMigrations() []migration {
 	return []migration{
 		getCreateUsersTable(),
+		getCreateHelpRequestTable(),
+		getCreateReputationLogsTable(),
+		getCreateMessagesTable(),
 	}
 }
 
