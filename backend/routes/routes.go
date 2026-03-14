@@ -49,9 +49,16 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 	healthController := &handler.HealthController{}
 	healthController.InitService(s)
 
+	userController := &handler.UserController{}
+	userController.InitService(s)
+
 	api := r.Group("/")
 	{
 		api.GET("/health", healthController.GetStatus)
+		api.GET("/users", userController.GetUsers)
+		api.GET("/user/:id", userController.GetUserByID)
+		api.POST("/user", userController.Register)
+
 	}
 	return r
 }

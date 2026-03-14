@@ -9,20 +9,25 @@ import (
 )
 
 type HealthController struct {
-	service contract.HealthService
+	HealthService contract.HealthService
 }
 
-func (s *HealthController) InitService(svc *contract.Service) {
-	fmt.Println("DEBUG: Initializing StocksController with StocksService")
-	if svc == nil {
+func (h *HealthController) InitService(s *contract.Service) {
+	fmt.Println("DEBUG: Initializing HealthController with HealthService")
+	if s == nil {
 		fmt.Println("ERROR: Provided service is nil")
 		return
 	}
-	s.service = svc.Health
+	if s.Health == nil {
+		fmt.Println("ERROR: Provided HealthService is nil")
+		return
+	}
+
+	h.HealthService = s.Health
 }
 
 func (h *HealthController) GetStatus(c *gin.Context) {
-	service, err := h.service.GetStatus()
+	service, err := h.HealthService.GetStatus()
 
 	if err != nil {
 		HandleError(c, err)
