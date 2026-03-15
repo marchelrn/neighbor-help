@@ -6,6 +6,7 @@ import (
 	"neighbor_help/config"
 	"neighbor_help/contract"
 	"neighbor_help/handler"
+	"neighbor_help/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -55,11 +56,16 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 	api := r.Group("/")
 	{
 		api.GET("/health", healthController.GetStatus)
-		api.GET("/users", userController.GetUsers)
-		api.GET("/user/:id", userController.GetUserByID)
-		api.POST("/user", userController.Register)
+		api.POST("/register", userController.Register)
 		api.POST("/login", userController.Login)
-		api.PUT("/user/:username", userController.UpdateUser)
+	}
+
+	auth := r.Group("/")
+	auth.Use(middleware.AuthMiddleware())
+	{
+		auth.GET("/users", userController.GetUsers)
+		auth.GET("/user/:id", userController.GetUserByID)
+		auth.PUT("/user/:username", userController.UpdateUser)
 	}
 	return r
 }

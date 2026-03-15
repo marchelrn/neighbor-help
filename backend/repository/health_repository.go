@@ -15,12 +15,11 @@ func ImplHealthRepository(db *gorm.DB) *HealthRepository {
 }
 
 func (r *HealthRepository) GetStatus() (string, error) {
-	message := "API is healthy"
-	err := "Error API is not healthy"
+	const message = "API is healthy"
+	const err = "Error API is not healthy"
 
 	if message == "" {
-		message = err
-		return "", fmt.Errorf(message)
+		return "", fmt.Errorf(err)
 	}
 	return message, nil
 }

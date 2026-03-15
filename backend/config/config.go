@@ -10,9 +10,10 @@ import (
 )
 
 type Config struct {
-	Port   string
-	IsProd bool
-	DBUrl  string
+	Port      string
+	IsProd    bool
+	DBUrl     string
+	JWTSecret string
 }
 
 var config *Config
@@ -35,9 +36,10 @@ func Load() {
 	isProd := utils.SafeCompareString(os.Getenv("ENV"), "production")
 
 	config = &Config{
-		Port:   strconv.Itoa(port),
-		IsProd: isProd,
-		DBUrl:  Production(),
+		Port:      strconv.Itoa(port),
+		IsProd:    isProd,
+		DBUrl:     Production(),
+		JWTSecret: os.Getenv("JWT_SECRET"),
 	}
 }
 

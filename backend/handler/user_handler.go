@@ -61,8 +61,8 @@ func (u *UserController) Login(c *gin.Context) {
 	}
 
 	c.JSON(response.Status, gin.H{
-		"message":  response.Message,
-		"username": response.Data,
+		"message": response.Message,
+		"token":   response.Token,
 	})
 }
 

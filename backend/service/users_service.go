@@ -5,6 +5,7 @@ import (
 	"neighbor_help/dto"
 	"neighbor_help/models"
 	errs "neighbor_help/pkg/error"
+	"neighbor_help/pkg/token"
 	"neighbor_help/utils"
 	"net/http"
 
@@ -93,10 +94,15 @@ func (u *UsersService) Login(payload *dto.LoginRequest) (*dto.LoginResponse, err
 		return nil, errs.BadRequest("Invalid Password")
 	}
 
+	t, err := token.GenerateToken(user.ID, user.Username)
+	if err != nil {
+		return nil, errs.InternalServerError("Failed to generate token")
+	}
+
 	response := &dto.LoginResponse{
 		Status:  http.StatusOK,
 		Message: "Login Success",
-		Data:    user.Username,
+		Token:   t,
 	}
 	return response, nil
 }
