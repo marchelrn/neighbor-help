@@ -42,7 +42,53 @@ func (u *UserController) Register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(response.Status, response.Message)
+	c.JSON(response.Status, gin.H{
+		"message": response.Message,
+	})
+}
+
+func (u *UserController) Login(c *gin.Context) {
+	var payload dto.LoginRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		HandleError(c, errs.BadRequest("Invalid Request Body"))
+		return
+	}
+
+	response, err := u.UserService.Login(&payload)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	c.JSON(response.Status, gin.H{
+		"message":  response.Message,
+		"username": response.Data,
+	})
+}
+
+func (u *UserController) UpdateUser(c *gin.Context) {
+	usernameParam := c.Param("username")
+	if usernameParam == "" {
+		HandleError(c, errs.BadRequest("Invalid username"))
+		return
+	}
+
+	var payload dto.UsersRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		HandleError(c, errs.BadRequest("Invalid Request Body"))
+		return
+	}
+
+	response, err := u.UserService.UpdateUser(usernameParam, &payload)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	c.JSON(response.Status, gin.H{
+		"message": response.Message,
+		"resp":    response.Data,
+	})
 }
 
 func (u *UserController) GetUsers(c *gin.Context) {

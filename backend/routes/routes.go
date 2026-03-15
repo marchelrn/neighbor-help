@@ -58,7 +58,8 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 		api.GET("/users", userController.GetUsers)
 		api.GET("/user/:id", userController.GetUserByID)
 		api.POST("/user", userController.Register)
-
+		api.POST("/login", userController.Login)
+		api.PUT("/user/:username", userController.UpdateUser)
 	}
 	return r
 }

@@ -5,8 +5,10 @@ import (
 	"neighbor_help/dto"
 	"neighbor_help/models"
 	errs "neighbor_help/pkg/error"
+	"neighbor_help/utils"
 	"net/http"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -29,20 +31,36 @@ func (u *UsersService) Register(payload *dto.UsersRequest) (*dto.UsersResponse, 
 		return nil, errs.BadRequest("Coordinate latitude and longitude are required")
 	}
 
-	// if user.Password != "" {
-	// 	return nil, errs.BadRequest("Password confirmation does not match")
-	// }
-	// usernameExists, err := u.UserRepository.GetUsers()
+	if !utils.IsValidUsername(payload.Username) {
+		return nil, errs.BadRequest("Invalid username")
+	}
+
+	if !utils.IsValidPassword(payload.Password) {
+		return nil, errs.BadRequest("Invalid password")
+	}
+
+	usernameExists, err := u.UserRepository.GetUserByUsername(payload.Username)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, errs.InternalServerError("Failed to get user by username")
+	}
+	if err == nil && usernameExists != nil {
+		return nil, errs.Conflict("Username already exists")
+	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, errs.InternalServerError("Failed to hash password")
+	}
 
 	userModel := &models.Users{
 		Username:        payload.Username,
-		Password:        payload.Password,
+		Password:        string(hashedPassword),
 		FullName:        payload.FullName,
 		Address:         payload.Address,
 		Coordinate_lat:  payload.Coordinate_lat,
 		Coordinate_long: payload.Coordinate_long,
 	}
-	err := u.UserRepository.CreateUser(userModel)
+
+	err = u.UserRepository.CreateUser(userModel)
 	if err != nil {
 		return nil, errs.InternalServerError("Failed to register user")
 	}
@@ -54,11 +72,92 @@ func (u *UsersService) Register(payload *dto.UsersRequest) (*dto.UsersResponse, 
 			{
 				ID:              userModel.ID,
 				Username:        userModel.Username,
-				Password:        userModel.Password,
 				FullName:        userModel.FullName,
 				Address:         userModel.Address,
 				Coordinate_lat:  userModel.Coordinate_lat,
 				Coordinate_long: userModel.Coordinate_long,
+			},
+		},
+	}
+	return response, nil
+}
+
+func (u *UsersService) Login(payload *dto.LoginRequest) (*dto.LoginResponse, error) {
+	user, err := u.UserRepository.GetUserByUsername(payload.Username)
+	if err != nil {
+		return nil, errs.NotFound("User Not Found, Please register first")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
+	if err != nil {
+		return nil, errs.BadRequest("Invalid Password")
+	}
+
+	response := &dto.LoginResponse{
+		Status:  http.StatusOK,
+		Message: "Login Success",
+		Data:    user.Username,
+	}
+	return response, nil
+}
+
+func (u *UsersService) UpdateUser(username string, payload *dto.UsersRequest) (*dto.UsersResponse, error) {
+	user, err := u.UserRepository.GetUserByUsername(username)
+	if err != nil {
+		return nil, errs.NotFound("User Not Found")
+	}
+	if payload.Username != "" && payload.Username != username {
+		if !utils.IsValidUsername(payload.Username) {
+			return nil, errs.BadRequest("Invalid Username")
+		}
+
+		usrExists, err := u.UserRepository.GetUserByUsername(payload.Username)
+		if err == nil && usrExists.Username != username {
+			return nil, errs.Conflict("Username already taken")
+		}
+		user.Username = payload.Username
+	}
+
+	if payload.Password != "" {
+		if !utils.IsValidPassword(payload.Password) {
+			return nil, errs.BadRequest("Invalid Password")
+		}
+		hashed, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, errs.InternalServerError("Failed to hash password")
+		}
+		user.Password = string(hashed)
+	}
+
+	if payload.FullName == "" {
+		payload.FullName = user.FullName
+	}
+	if payload.Address == "" {
+		payload.Address = user.Address
+	}
+	if payload.Coordinate_lat == 0 {
+		payload.Coordinate_lat = user.Coordinate_lat
+	}
+	if payload.Coordinate_long == 0 {
+		payload.Coordinate_long = user.Coordinate_long
+	}
+
+	err = u.UserRepository.UpdateUser(username, user)
+	if err != nil {
+		return nil, errs.InternalServerError("Failed to update User")
+	}
+
+	response := &dto.UsersResponse{
+		Status:  http.StatusOK,
+		Message: "Update Success",
+		Data: []dto.UsersData{
+			{
+				ID:              user.ID,
+				Username:        user.Username,
+				FullName:        user.FullName,
+				Address:         user.Address,
+				Coordinate_lat:  user.Coordinate_lat,
+				Coordinate_long: user.Coordinate_long,
 			},
 		},
 	}
@@ -81,7 +180,6 @@ func (u *UsersService) GetUsers() (*dto.AllUsersResponse, error) {
 		response.Response = append(response.Response, dto.UsersData{
 			ID:              user.ID,
 			Username:        user.Username,
-			Password:        user.Password,
 			FullName:        user.FullName,
 			Address:         user.Address,
 			Coordinate_lat:  user.Coordinate_lat,
@@ -107,7 +205,6 @@ func (u *UsersService) GetUserByID(id uint) (*dto.UsersResponse, error) {
 			{
 				ID:              user.ID,
 				Username:        user.Username,
-				Password:        user.Password,
 				FullName:        user.FullName,
 				Address:         user.Address,
 				Coordinate_lat:  user.Coordinate_lat,

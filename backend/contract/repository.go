@@ -15,6 +15,8 @@ type HealthRepository interface {
 
 type UsersRepository interface {
 	GetUsers() ([]*models.Users, error)
-	CreateUser(user *models.Users) error
 	GetUserByID(id uint) (*models.Users, error)
+	GetUserByUsername(username string) (*models.Users, error)
+	CreateUser(user *models.Users) error
+	UpdateUser(username string, payload *models.Users) error
 }

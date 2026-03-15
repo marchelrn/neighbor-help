@@ -1,5 +1,6 @@
 package dto
 
+// Users
 type UsersRequest struct {
 	ID              uint    `json:"id"`
 	Username        string  `json:"username"`
@@ -13,7 +14,6 @@ type UsersRequest struct {
 type UsersData struct {
 	ID              uint    `json:"id"`
 	Username        string  `json:"username"`
-	Password        string  `json:"password"`
 	FullName        string  `json:"full_name"`
 	Address         string  `json:"address"`
 	Coordinate_lat  float64 `json:"coordinate_lat"`
@@ -28,4 +28,16 @@ type UsersResponse struct {
 
 type AllUsersResponse struct {
 	Response []UsersData `json:"data"`
+}
+
+// Login
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Data    string `json:"data"`
 }

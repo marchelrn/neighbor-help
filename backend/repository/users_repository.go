@@ -37,3 +37,18 @@ func (r *UsersRepository) GetUserByID(id uint) (*models.Users, error) {
 	}
 	return &user, nil
 }
+
+func (r *UsersRepository) GetUserByUsername(username string) (*models.Users, error) {
+	var user models.Users
+	if err := r.db.First(&user, "username = ?", username).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *UsersRepository) UpdateUser(username string, payload *models.Users) error {
+	if err := r.db.Model(&models.Users{}).Where("username = ?", username).Updates(payload).Error; err != nil {
+		return err
+	}
+	return nil
+}
