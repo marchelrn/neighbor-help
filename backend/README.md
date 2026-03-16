@@ -4,7 +4,7 @@ REST API backend untuk aplikasi **Neighbor Help**, platform yang menghubungkan w
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Kategori | Teknologi | Versi |
 |---|---|---|
@@ -21,7 +21,7 @@ REST API backend untuk aplikasi **Neighbor Help**, platform yang menghubungkan w
 
 ---
 
-## 📁 Struktur Folder
+## Folder Structure
 
 ```
 backend/
@@ -84,7 +84,7 @@ backend/
 
 ---
 
-## 🗄️ Skema Database
+## Skema Database
 
 ```
 ┌─────────────────────────────┐       ┌──────────────────────────────────┐
@@ -125,7 +125,7 @@ backend/
 
 ---
 
-## 🚀 Cara Menjalankan
+## Cara Menjalankan
 
 ### 1. Clone & masuk ke folder
 
@@ -182,7 +182,7 @@ http://localhost:8080
 
 ---
 
-### 🔓 Public Routes
+### Public Routes
 
 Tidak membutuhkan token.
 
@@ -243,7 +243,7 @@ Login dan mendapatkan JWT token.
 
 ---
 
-### 🔐 Protected Routes
+### Protected Routes
 
 Semua route di bawah membutuhkan header:
 ```
