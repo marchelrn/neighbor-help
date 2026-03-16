@@ -27,7 +27,9 @@ type UsersResponse struct {
 }
 
 type AllUsersResponse struct {
-	Response []UsersData `json:"data"`
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Users   []UsersData `json:"users"`
 }
 
 // Login
@@ -42,6 +44,7 @@ type LoginResponse struct {
 	Token   string `json:"token"`
 }
 
+// Nearby Users
 type NearbyUserData struct {
 	ID              uint    `json:"id"`
 	Username        string  `json:"username"`
@@ -53,5 +56,7 @@ type NearbyUserData struct {
 }
 
 type NearbyUsersResponse struct {
-	Users []NearbyUserData `json:"users"`
+	Status  int              `json:"status"`
+	Message string           `json:"message"`
+	Users   []NearbyUserData `json:"users"`
 }

@@ -182,10 +182,12 @@ func (u *UsersService) GetUsers() (*dto.AllUsersResponse, error) {
 	}
 
 	response := &dto.AllUsersResponse{
-		Response: []dto.UsersData{},
+		Status:  http.StatusOK,
+		Users:   []dto.UsersData{},
+		Message: "Users retrieved successfully",
 	}
 	for _, user := range users {
-		response.Response = append(response.Response, dto.UsersData{
+		response.Users = append(response.Users, dto.UsersData{
 			ID:              user.ID,
 			Username:        user.Username,
 			FullName:        user.FullName,
@@ -242,12 +244,14 @@ func (u *UsersService) GetNearbyUsers(username string) (*dto.NearbyUsersResponse
 	}
 
 	response := &dto.NearbyUsersResponse{
-		Users: []dto.NearbyUserData{},
+		Status:  http.StatusOK,
+		Users:   []dto.NearbyUserData{},
+		Message: "Nearby users retrieved successfully",
 	}
 
 	for _, user := range nearbyUsers {
 		distanceFloat := fmt.Sprintf("%.2f", user.Distance)
-		f, err := strconv.ParseFloat(distanceFloat, 64)
+		distance, err := strconv.ParseFloat(distanceFloat, 64)
 		if err != nil {
 			return nil, errs.InternalServerError("Failed to parse distance")
 		}
@@ -258,7 +262,7 @@ func (u *UsersService) GetNearbyUsers(username string) (*dto.NearbyUsersResponse
 			Address:         user.Address,
 			Coordinate_lat:  user.Coordinate_lat,
 			Coordinate_long: user.Coordinate_long,
-			Distance:        f,
+			Distance:        distance,
 		})
 	}
 

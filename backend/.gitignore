@@ -1,5 +1,6 @@
-.env
+*.env
 *.log
 *.out
 bin/
 tmp/
+testing_json/

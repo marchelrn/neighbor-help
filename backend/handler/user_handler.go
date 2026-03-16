@@ -43,6 +43,7 @@ func (u *UserController) Register(c *gin.Context) {
 	}
 
 	c.JSON(response.Status, gin.H{
+		"status":  response.Status,
 		"message": response.Message,
 	})
 }
@@ -99,8 +100,9 @@ func (u *UserController) GetUsers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Users retrieved successfully",
-		"data":    users,
+		"status":  users.Status,
+		"message": users.Message,
+		"users":   users.Users,
 	})
 }
 
@@ -118,7 +120,11 @@ func (u *UserController) GetUserByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, gin.H{
+		"status":  response.Status,
+		"message": response.Message,
+		"user":    response.Data,
+	})
 }
 
 func (u *UserController) GetNearbyUsers(c *gin.Context) {
@@ -133,6 +139,15 @@ func (u *UserController) GetNearbyUsers(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
+	responseUser := "users"
 
-	c.JSON(http.StatusOK, response)
+	if len(response.Users) == 1 {
+		responseUser = "user"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":     response.Status,
+		"message":    response.Message,
+		responseUser: response.Users,
+	})
 }
