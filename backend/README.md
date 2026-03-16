@@ -1,4 +1,4 @@
-# 🏘️ Neighbor Help — Backend
+# Neighbor Help — Backend
 
 REST API backend untuk aplikasi **Neighbor Help**, platform yang menghubungkan warga sekitar untuk saling membantu dalam radius tertentu.
 
@@ -173,7 +173,7 @@ go run main.go
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Base URL
 ```
@@ -387,7 +387,7 @@ Semua error mengikuti format:
 
 ---
 
- 🏗️ Arsitektur
+Arsitektur
 
 Project menggunakan **Layered Architecture**:
 
@@ -407,7 +407,7 @@ Request → Handler → Service → Repository → Database
 
 ---
 
- 📏 Rate Limiting
+Rate Limiting
 
 | Environment | Limit |
 |---|---|
