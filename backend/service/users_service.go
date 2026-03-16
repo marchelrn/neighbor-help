@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"neighbor_help/contract"
 	"neighbor_help/dto"
 	"neighbor_help/models"
@@ -8,6 +9,7 @@ import (
 	"neighbor_help/pkg/token"
 	"neighbor_help/utils"
 	"net/http"
+	"strconv"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -218,5 +220,47 @@ func (u *UsersService) GetUserByID(id uint) (*dto.UsersResponse, error) {
 			},
 		},
 	}
+	return response, nil
+}
+
+func (u *UsersService) GetNearbyUsers(username string) (*dto.NearbyUsersResponse, error) {
+	currentUsers, err := u.UserRepository.GetUserByUsername(username)
+	if err != nil {
+		return nil, errs.NotFound("User Not Found")
+	}
+
+	const radius = 500
+
+	nearbyUsers, err := u.UserRepository.GetNearbyUsers(
+		currentUsers.Coordinate_lat,
+		currentUsers.Coordinate_long,
+		radius,
+		currentUsers.ID,
+	)
+	if err != nil {
+		return nil, errs.InternalServerError("Failed to get Nearby Users")
+	}
+
+	response := &dto.NearbyUsersResponse{
+		Users: []dto.NearbyUserData{},
+	}
+
+	for _, user := range nearbyUsers {
+		distanceFloat := fmt.Sprintf("%.2f", user.Distance)
+		f, err := strconv.ParseFloat(distanceFloat, 64)
+		if err != nil {
+			return nil, errs.InternalServerError("Failed to parse distance")
+		}
+		response.Users = append(response.Users, dto.NearbyUserData{
+			ID:              user.ID,
+			Username:        user.Username,
+			FullName:        user.FullName,
+			Address:         user.Address,
+			Coordinate_lat:  user.Coordinate_lat,
+			Coordinate_long: user.Coordinate_long,
+			Distance:        f,
+		})
+	}
+
 	return response, nil
 }

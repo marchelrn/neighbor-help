@@ -52,3 +52,33 @@ func (r *UsersRepository) UpdateUser(username string, payload *models.Users) err
 	}
 	return nil
 }
+
+func (r *UsersRepository) GetNearbyUsers(lat, lon float64, radius float64, excludeID uint) ([]*models.NearbyUser, error) {
+	var users []*models.NearbyUser
+	query := `
+        SELECT * FROM (
+            SELECT
+                id,
+                username,
+                full_name,
+                address,
+                coordinate_lat,
+                coordinate_long,
+                (6371000 * acos(
+                    LEAST(1.0,
+                        cos(radians(?)) * cos(radians(coordinate_lat)) *
+                        cos(radians(coordinate_long) - radians(?)) +
+                        sin(radians(?)) * sin(radians(coordinate_lat))
+                    )
+                )) AS distance
+            FROM users
+            WHERE id != ?
+        ) AS nearby
+        WHERE distance < ?
+        ORDER BY distance ASC
+    `
+	if err := r.db.Raw(query, lat, lon, lat, excludeID, radius).Scan(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
+}

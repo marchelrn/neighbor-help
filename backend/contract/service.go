@@ -16,6 +16,7 @@ type HealthService interface {
 type UsersService interface {
 	GetUsers() (*dto.AllUsersResponse, error)
 	GetUserByID(id uint) (*dto.UsersResponse, error)
+	GetNearbyUsers(username string) (*dto.NearbyUsersResponse, error)
 	Register(payload *dto.UsersRequest) (*dto.UsersResponse, error)
 	Login(payload *dto.LoginRequest) (*dto.LoginResponse, error)
 	UpdateUser(username string, payload *dto.UsersRequest) (*dto.UsersResponse, error)

@@ -66,6 +66,7 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 		auth.GET("/users", userController.GetUsers)
 		auth.GET("/user/:id", userController.GetUserByID)
 		auth.PUT("/user/:username", userController.UpdateUser)
+		auth.GET("/nearby", userController.GetNearbyUsers)
 	}
 	return r
 }

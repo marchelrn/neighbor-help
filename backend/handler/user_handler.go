@@ -120,3 +120,19 @@ func (u *UserController) GetUserByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+func (u *UserController) GetNearbyUsers(c *gin.Context) {
+	username, exists := c.Get("Username")
+	if !exists {
+		HandleError(c, errs.Unauthorized("Unauthorized"))
+		return
+	}
+
+	response, err := u.UserService.GetNearbyUsers(username.(string))
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
