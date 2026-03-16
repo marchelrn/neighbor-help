@@ -1,10 +1,10 @@
-# 🏘️ Neighbor Help — Backend
+# Neighbor Help — Backend
 
 REST API backend untuk aplikasi **Neighbor Help**, platform yang menghubungkan warga sekitar untuk saling membantu dalam radius tertentu.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Kategori | Teknologi | Versi |
 |---|---|---|
@@ -21,7 +21,7 @@ REST API backend untuk aplikasi **Neighbor Help**, platform yang menghubungkan w
 
 ---
 
-## 📁 Struktur Folder
+## Struktur Folder
 
 ```
 backend/
@@ -84,7 +84,7 @@ backend/
 
 ---
 
-## 🗄️ Skema Database
+## Skema Database
 
 ```
 ┌─────────────────────────────┐       ┌──────────────────────────────────┐
@@ -125,7 +125,7 @@ backend/
 
 ---
 
-## 🚀 Cara Menjalankan
+## Cara Menjalankan
 
 ### 1. Clone & masuk ke folder
 
@@ -173,7 +173,7 @@ go run main.go
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Base URL
 ```
@@ -182,7 +182,7 @@ http://localhost:8080
 
 ---
 
-### 🔓 Public Routes
+### Public Routes
 
 Tidak membutuhkan token.
 
@@ -243,7 +243,7 @@ Login dan mendapatkan JWT token.
 
 ---
 
-### 🔐 Protected Routes
+### Protected Routes
 
 Semua route di bawah membutuhkan header:
 ```
@@ -364,7 +364,7 @@ Mengambil daftar user yang berada dalam radius **500 meter** dari lokasi user ya
 
 ---
 
-## ❌ Error Response
+## Error Response
 
 Semua error mengikuti format:
 
@@ -387,7 +387,7 @@ Semua error mengikuti format:
 
 ---
 
-## 🏗️ Arsitektur
+## Arsitektur
 
 Project menggunakan **Layered Architecture**:
 
@@ -407,7 +407,7 @@ Request → Handler → Service → Repository → Database
 
 ---
 
-## 📏 Rate Limiting
+## Rate Limiting
 
 | Environment | Limit |
 |---|---|
