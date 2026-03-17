@@ -6,7 +6,8 @@ import (
 
 func New(repo *contract.Repository) (*contract.Service, error) {
 	return &contract.Service{
-		Health: implHealthService(repo.HealthRepository),
-		User:   implUsersService(repo.UsersRepository),
+		Health:      implHealthService(repo.HealthRepository),
+		User:        implUsersService(repo.UsersRepository),
+		HelpRequest: implHelpRequestService(repo.HelpRequestRepository, repo.UsersRepository),
 	}, nil
 }

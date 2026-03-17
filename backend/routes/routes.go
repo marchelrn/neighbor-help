@@ -53,6 +53,9 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 	userController := &handler.UserController{}
 	userController.InitService(s)
 
+	helpRequestController := &handler.HelpRequestController{}
+	helpRequestController.InitService(s)
+
 	api := r.Group("/")
 	{
 		api.GET("/health", healthController.GetStatus)
@@ -67,6 +70,10 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 		auth.GET("/user/:id", userController.GetUserByID)
 		auth.PUT("/user/:username", userController.UpdateUser)
 		auth.GET("/nearby", userController.GetNearbyUsers)
+		auth.POST("/help", helpRequestController.CreateHelpRequest)
+		auth.GET("/help/nearby", helpRequestController.GetNearbyHelpRequests)
+		auth.GET("/help", helpRequestController.GetAllHelpRequests)
+		auth.PUT("/help/:id", helpRequestController.UpdateHelpRequest)
 	}
 	return r
 }

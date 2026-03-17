@@ -47,10 +47,7 @@ func (r *UsersRepository) GetUserByUsername(username string) (*models.Users, err
 }
 
 func (r *UsersRepository) UpdateUser(username string, payload *models.Users) error {
-	if err := r.db.Model(&models.Users{}).Where("username = ?", username).Updates(payload).Error; err != nil {
-		return err
-	}
-	return nil
+	return r.db.Save(payload).Error
 }
 
 func (r *UsersRepository) GetNearbyUsers(lat, lon float64, radius float64, excludeID uint) ([]*models.NearbyUser, error) {

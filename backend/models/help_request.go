@@ -17,7 +17,8 @@ const (
 )
 
 type HelpRequest struct {
-	ID          int      `gorm:"primaryKey;autoIncrement"`
+	ID          uint     `gorm:"primaryKey;autoIncrement"`
+	Username    string   `gorm:"foreignKey:username"`
 	UserID      int      `gorm:"not null"`
 	Title       string   `gorm:"type:varchar(255);not null"`
 	Description string   `gorm:"type:varchar(255);not null"`
@@ -28,4 +29,16 @@ type HelpRequest struct {
 
 func (HelpRequest) TableName() string {
 	return "help_requests"
+}
+
+type NearbyHelpRequest struct {
+	ID          uint      `gorm:"column:id"`
+	UserID      int       `gorm:"column:user_id"`
+	Username    string    `gorm:"column:username"`
+	Title       string    `gorm:"column:title"`
+	Description string    `gorm:"column:description"`
+	Category    Category  `gorm:"column:category"`
+	Status      Status    `gorm:"column:status"`
+	CreatedAt   time.Time `gorm:"column:created_at"`
+	Distance    float64   `gorm:"column:distance"`
 }

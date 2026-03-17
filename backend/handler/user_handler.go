@@ -26,6 +26,7 @@ func (c *UserController) InitService(s *contract.Service) {
 		return
 	}
 	c.UserService = s.User
+
 	fmt.Println("DEBUG: UserController initialized successfully with UserService")
 }
 
@@ -74,7 +75,7 @@ func (u *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	var payload dto.UsersRequest
+	var payload dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		HandleError(c, errs.BadRequest("Invalid Request Body"))
 		return

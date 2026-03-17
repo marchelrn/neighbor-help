@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 // Users
 type UsersRequest struct {
 	ID              uint    `json:"id"`
@@ -9,6 +11,15 @@ type UsersRequest struct {
 	Address         string  `json:"address"`
 	Coordinate_lat  float64 `json:"coordinate_lat"`
 	Coordinate_long float64 `json:"coordinate_long"`
+}
+
+type UpdateUserRequest struct {
+	Username        *string  `json:"username"`
+	Password        *string  `json:"password"`
+	FullName        *string  `json:"full_name"`
+	Address         *string  `json:"address"`
+	Coordinate_lat  *float64 `json:"coordinate_lat"`
+	Coordinate_long *float64 `json:"coordinate_long"`
 }
 
 type UsersData struct {
@@ -59,4 +70,54 @@ type NearbyUsersResponse struct {
 	Status  int              `json:"status"`
 	Message string           `json:"message"`
 	Users   []NearbyUserData `json:"users"`
+}
+
+// Help Request
+type HelpRequest struct {
+	ID          uint   `json:"id"`
+	UserID      uint   `json:"user_id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+	Status      string `json:"status"`
+}
+
+type UpdateHelpRequest struct {
+	Title       *string `json:"title"`
+	Description *string `json:"description"`
+	Category    *string `json:"category"`
+	Status      *string `json:"status"`
+}
+
+type HelpRequestData struct {
+	ID          uint   `json:"id"`
+	UserID      uint   `json:"user_id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+	Status      string `json:"status"`
+}
+
+type HelpRequestResponse struct {
+	Status       int               `json:"status"`
+	Message      string            `json:"message"`
+	HelpRequests []HelpRequestData `json:"help_requests"`
+}
+
+type NearbyHelpRequestData struct {
+	ID          uint      `json:"id"`
+	UserID      uint      `json:"user_id"`
+	Username    string    `json:"username"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Category    string    `json:"category"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+	Distance    float64   `json:"distance_m"`
+}
+
+type NearbyHelpRequestResponse struct {
+	Status       int                     `json:"status"`
+	Message      string                  `json:"message"`
+	HelpRequests []NearbyHelpRequestData `json:"help_requests"`
 }

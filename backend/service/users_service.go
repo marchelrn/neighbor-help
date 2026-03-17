@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"neighbor_help/contract"
 	"neighbor_help/dto"
 	"neighbor_help/models"
@@ -9,7 +8,6 @@ import (
 	"neighbor_help/pkg/token"
 	"neighbor_help/utils"
 	"net/http"
-	"strconv"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -109,45 +107,47 @@ func (u *UsersService) Login(payload *dto.LoginRequest) (*dto.LoginResponse, err
 	return response, nil
 }
 
-func (u *UsersService) UpdateUser(username string, payload *dto.UsersRequest) (*dto.UsersResponse, error) {
+func (u *UsersService) UpdateUser(username string, payload *dto.UpdateUserRequest) (*dto.UsersResponse, error) {
 	user, err := u.UserRepository.GetUserByUsername(username)
 	if err != nil {
 		return nil, errs.NotFound("User Not Found")
 	}
-	if payload.Username != "" && payload.Username != username {
-		if !utils.IsValidUsername(payload.Username) {
+	if payload.Username != nil {
+		if !utils.IsValidUsername(*payload.Username) {
 			return nil, errs.BadRequest("Invalid Username")
 		}
 
-		usrExists, err := u.UserRepository.GetUserByUsername(payload.Username)
+		usrExists, err := u.UserRepository.GetUserByUsername(*payload.Username)
 		if err == nil && usrExists.Username != username {
 			return nil, errs.Conflict("Username already taken")
 		}
-		user.Username = payload.Username
+		user.Username = *payload.Username
 	}
 
-	if payload.Password != "" {
-		if !utils.IsValidPassword(payload.Password) {
+	if payload.Password != nil {
+		if !utils.IsValidPassword(*payload.Password) {
 			return nil, errs.BadRequest("Invalid Password")
 		}
-		hashed, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
+		hashed, err := bcrypt.GenerateFromPassword([]byte(*payload.Password), bcrypt.DefaultCost)
 		if err != nil {
 			return nil, errs.InternalServerError("Failed to hash password")
 		}
 		user.Password = string(hashed)
 	}
 
-	if payload.FullName == "" {
-		payload.FullName = user.FullName
+	if payload.FullName != nil {
+		user.FullName = *payload.FullName
 	}
-	if payload.Address == "" {
-		payload.Address = user.Address
+
+	if payload.Address != nil {
+		user.Address = *payload.Address
 	}
-	if payload.Coordinate_lat == 0 {
-		payload.Coordinate_lat = user.Coordinate_lat
+
+	if payload.Coordinate_lat != nil {
+		user.Coordinate_lat = *payload.Coordinate_lat
 	}
-	if payload.Coordinate_long == 0 {
-		payload.Coordinate_long = user.Coordinate_long
+	if payload.Coordinate_long != nil {
+		user.Coordinate_long = *payload.Coordinate_long
 	}
 
 	err = u.UserRepository.UpdateUser(username, user)
@@ -183,8 +183,8 @@ func (u *UsersService) GetUsers() (*dto.AllUsersResponse, error) {
 
 	response := &dto.AllUsersResponse{
 		Status:  http.StatusOK,
-		Users:   []dto.UsersData{},
 		Message: "Users retrieved successfully",
+		Users:   []dto.UsersData{},
 	}
 	for _, user := range users {
 		response.Users = append(response.Users, dto.UsersData{
@@ -250,11 +250,6 @@ func (u *UsersService) GetNearbyUsers(username string) (*dto.NearbyUsersResponse
 	}
 
 	for _, user := range nearbyUsers {
-		distanceFloat := fmt.Sprintf("%.2f", user.Distance)
-		distance, err := strconv.ParseFloat(distanceFloat, 64)
-		if err != nil {
-			return nil, errs.InternalServerError("Failed to parse distance")
-		}
 		response.Users = append(response.Users, dto.NearbyUserData{
 			ID:              user.ID,
 			Username:        user.Username,
@@ -262,7 +257,7 @@ func (u *UsersService) GetNearbyUsers(username string) (*dto.NearbyUsersResponse
 			Address:         user.Address,
 			Coordinate_lat:  user.Coordinate_lat,
 			Coordinate_long: user.Coordinate_long,
-			Distance:        distance,
+			Distance:        utils.DecimalFormat(user.Distance),
 		})
 	}
 

@@ -5,8 +5,9 @@ import (
 )
 
 type Repository struct {
-	HealthRepository HealthRepository
-	UsersRepository  UsersRepository
+	HealthRepository      HealthRepository
+	UsersRepository       UsersRepository
+	HelpRequestRepository HelpRequestRepository
 }
 
 type HealthRepository interface {
@@ -20,4 +21,13 @@ type UsersRepository interface {
 	GetNearbyUsers(lat, lon float64, radius float64, excludeID uint) ([]*models.NearbyUser, error)
 	CreateUser(user *models.Users) error
 	UpdateUser(username string, payload *models.Users) error
+}
+
+type HelpRequestRepository interface {
+	CreateHelpRequest(payload *models.HelpRequest) error
+	GetAllHelpRequests() ([]*models.HelpRequest, error)
+	GetHelpRequestByID(id uint) (*models.HelpRequest, error)
+	GetHelpRequestByUserID(id uint) (*models.HelpRequest, error)
+	GetNearbyHelpRequests(lat, lon float64, excludeUserID uint, radiusMeters float64) ([]*models.NearbyHelpRequest, error)
+	UpdateHelpRequest(payload *models.HelpRequest) error
 }
