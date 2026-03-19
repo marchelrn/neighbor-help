@@ -186,3 +186,24 @@ func (s *HelpRequestService) UpdateHelpRequest(userID uint, helpRequestID uint, 
 		},
 	}, nil
 }
+
+func (s *HelpRequestService) GetHelpRequestByID(id uint) (*dto.HelpRequestResponse, error) {
+	helpReq, err := s.HelpRequestRepository.GetHelpRequestByID(id)
+	if err != nil {
+		return nil, errs.NotFound("Help request not found")
+	}
+	return &dto.HelpRequestResponse{
+		Status:  http.StatusOK,
+		Message: "Help request found",
+		HelpRequests: []dto.HelpRequestData{
+			{
+				ID:          helpReq.ID,
+				UserID:      uint(helpReq.UserID),
+				Title:       helpReq.Title,
+				Description: helpReq.Description,
+				Category:    string(helpReq.Category),
+				Status:      string(helpReq.Status),
+			},
+		},
+	}, nil
+}

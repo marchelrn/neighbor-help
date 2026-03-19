@@ -9,5 +9,6 @@ func New(repo *contract.Repository) (*contract.Service, error) {
 		Health:      implHealthService(repo.HealthRepository),
 		User:        implUsersService(repo.UsersRepository),
 		HelpRequest: implHelpRequestService(repo.HelpRequestRepository, repo.UsersRepository),
+		Chat:        implChatService(repo.MessagesRepository, repo.HelpRequestRepository, repo.UsersRepository),
 	}, nil
 }

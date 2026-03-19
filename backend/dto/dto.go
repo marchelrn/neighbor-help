@@ -121,3 +121,43 @@ type NearbyHelpRequestResponse struct {
 	Message      string                  `json:"message"`
 	HelpRequests []NearbyHelpRequestData `json:"help_requests"`
 }
+
+// Messages / chat
+
+type MessageData struct {
+	ID         uint      `json:"id"`
+	RequestID  uint      `json:"request_id"`
+	SenderID   uint      `json:"sender_id"`
+	RecieverID uint      `json:"reciever_id"`
+	Content    string    `json:"content"`
+	SentAt     time.Time `json:"created_at"`
+}
+
+type MessageResponse struct {
+	Status      int           `json:"status"`
+	Message     string        `json:"message"`
+	MessageData []MessageData `json:"message_data"`
+}
+
+type CreateMessageRequest struct {
+	RequestID  uint   `json:"request_id"`
+	SenderID   uint   `json:"sender_id"`
+	ReceiverID uint   `json:"receiver_id"`
+	Content    string `json:"content"`
+}
+
+type SavedMessage struct {
+	ID         uint      `json:"id"`
+	RequestID  uint      `json:"request_id"`
+	SenderID   uint      `json:"sender_id"`
+	RecieverID uint      `json:"reciever_id"`
+	Content    string    `json:"content"`
+	SentAt     time.Time `json:"sent_at"`
+}
+
+type ChatAccessResult struct {
+	RequestID       uint   `json:"request_id"`
+	RequesterID     uint   `json:"requester_id"`
+	CurrentUserID   uint   `json:"current_user_id"`
+	CurrentUsername string `json:"current_username"`
+}

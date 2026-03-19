@@ -11,5 +11,6 @@ func New(db *gorm.DB) *contract.Repository {
 		HealthRepository:      ImplHealthRepository(db),
 		UsersRepository:       ImplUsersRepository(db),
 		HelpRequestRepository: ImplHelpRequestRepository(db),
+		MessagesRepository:    ImplMessagesRepository(db),
 	}
 }

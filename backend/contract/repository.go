@@ -8,6 +8,7 @@ type Repository struct {
 	HealthRepository      HealthRepository
 	UsersRepository       UsersRepository
 	HelpRequestRepository HelpRequestRepository
+	MessagesRepository    MessagesRepository
 }
 
 type HealthRepository interface {
@@ -30,4 +31,10 @@ type HelpRequestRepository interface {
 	GetHelpRequestByUserID(id uint) (*models.HelpRequest, error)
 	GetNearbyHelpRequests(lat, lon float64, excludeUserID uint, radiusMeters float64) ([]*models.NearbyHelpRequest, error)
 	UpdateHelpRequest(payload *models.HelpRequest) error
+}
+
+type MessagesRepository interface {
+	GetMessagesByHelpRequestID(helpRequestID uint) ([]*models.Messages, error)
+	CreateMessage(payload *models.Messages) error
+	SaveMessage(payload *models.Messages) error
 }

@@ -7,6 +7,7 @@ import (
 	"neighbor_help/contract"
 	"neighbor_help/handler"
 	"neighbor_help/middleware"
+	"neighbor_help/pkg/hub"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -56,11 +57,16 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 	helpRequestController := &handler.HelpRequestController{}
 	helpRequestController.InitService(s)
 
+	chatController := &handler.ChatController{}
+	chatController.Hub = hub.NewHub()
+	chatController.InitService(s)
+
 	api := r.Group("/")
 	{
 		api.GET("/health", healthController.GetStatus)
 		api.POST("/register", userController.Register)
 		api.POST("/login", userController.Login)
+		api.GET("/ws/help/:id/chat", chatController.JoinChat)
 	}
 
 	auth := r.Group("/")
@@ -74,6 +80,7 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 		auth.GET("/help/nearby", helpRequestController.GetNearbyHelpRequests)
 		auth.GET("/help", helpRequestController.GetAllHelpRequests)
 		auth.PUT("/help/:id", helpRequestController.UpdateHelpRequest)
+		auth.GET("/help/:id/messages", chatController.GetMessages)
 	}
 	return r
 }
