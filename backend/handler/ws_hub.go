@@ -50,10 +50,6 @@ var globalHub = &Hub{
 	rooms: make(map[uint]*Room),
 }
 
-func GetHub() *Hub {
-	return globalHub
-}
-
 func (h *Hub) GetOrCreateRoom(helpRequestID uint) *Room {
 	h.mu.Lock()
 	defer h.mu.Unlock()

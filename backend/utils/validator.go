@@ -14,14 +14,14 @@ func IsValidUsername(username string) bool {
 	return re.MatchString(username)
 }
 
-func IsValidEmail(email string) bool {
-	regex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-	re, err := regexp.Compile(regex)
-	if err != nil {
-		return false
-	}
-	return re.MatchString(email)
-}
+//func IsValidEmail(email string) bool {
+//	regex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+//	re, err := regexp.Compile(regex)
+//	if err != nil {
+//		return false
+//	}
+//	return re.MatchString(email)
+//}
 
 func IsValidPassword(password string) bool {
 	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)

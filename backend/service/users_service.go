@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"neighbor_help/contract"
 	"neighbor_help/dto"
 	"neighbor_help/models"
@@ -41,7 +42,7 @@ func (u *UsersService) Register(payload *dto.UsersRequest) (*dto.UsersResponse, 
 	}
 
 	usernameExists, err := u.UserRepository.GetUserByUsername(payload.Username)
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errs.InternalServerError("Failed to get user by username")
 	}
 	if err == nil && usernameExists != nil {
@@ -150,7 +151,7 @@ func (u *UsersService) UpdateUser(username string, payload *dto.UpdateUserReques
 		user.Coordinate_long = *payload.Coordinate_long
 	}
 
-	err = u.UserRepository.UpdateUser(username, user)
+	err = u.UserRepository.UpdateUser(user)
 	if err != nil {
 		return nil, errs.InternalServerError("Failed to update User")
 	}
@@ -175,7 +176,7 @@ func (u *UsersService) UpdateUser(username string, payload *dto.UpdateUserReques
 func (u *UsersService) GetUsers() (*dto.AllUsersResponse, error) {
 	users, err := u.UserRepository.GetUsers()
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.NotFound("User Not Found")
 		}
 		return nil, errs.InternalServerError("Failed to get Users")
@@ -202,7 +203,7 @@ func (u *UsersService) GetUsers() (*dto.AllUsersResponse, error) {
 func (u *UsersService) GetUserByID(id uint) (*dto.UsersResponse, error) {
 	user, err := u.UserRepository.GetUserByID(id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errs.NotFound("User Not Found")
 		}
 		return nil, errs.InternalServerError("Failed to get User")

@@ -46,7 +46,7 @@ func (r *UsersRepository) GetUserByUsername(username string) (*models.Users, err
 	return &user, nil
 }
 
-func (r *UsersRepository) UpdateUser(username string, payload *models.Users) error {
+func (r *UsersRepository) UpdateUser(payload *models.Users) error {
 	return r.db.Save(payload).Error
 }
 
