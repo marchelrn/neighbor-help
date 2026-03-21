@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"neighbor_help/contract"
 	"neighbor_help/dto"
 	"neighbor_help/models"
@@ -206,4 +207,29 @@ func (s *HelpRequestService) GetHelpRequestByID(id uint) (*dto.HelpRequestRespon
 			},
 		},
 	}, nil
+}
+
+func (s *HelpRequestService) GetHelpRequestByUserID(userID uint) (*dto.HelpRequestResponse, error) {
+	helpReq, err := s.HelpRequestRepository.GetHelpRequestByUserID(userID)
+	if err != nil {
+		return nil, errs.NotFound("Help request not found for this user")
+	}
+	response := &dto.HelpRequestResponse{
+		Status:       http.StatusOK,
+		Message:      fmt.Sprintf("Help requests for user %d retrieved successfully", userID),
+		HelpRequests: []dto.HelpRequestData{},
+	}
+
+	for _, hr := range helpReq {
+		response.HelpRequests = append(response.HelpRequests, dto.HelpRequestData{
+			ID:          hr.ID,
+			UserID:      uint(hr.UserID),
+			Username:    hr.Username,
+			Title:       hr.Title,
+			Description: hr.Description,
+			Category:    string(hr.Category),
+			Status:      string(hr.Status),
+		})
+	}
+	return response, nil
 }

@@ -122,3 +122,23 @@ func (h *HelpRequestController) GetAllHelpRequests(c *gin.Context) {
 		"help_requests": response.HelpRequests,
 	})
 }
+
+func (h *HelpRequestController) GetHelpRequestByUserID(c *gin.Context) {
+	userID, exists := c.Get("UserID")
+	if !exists {
+		HandleError(c, errs.Unauthorized("Unauthorized"))
+		return
+	}
+
+	response, err := h.HelpRequestService.GetHelpRequestByUserID(userID.(uint))
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":        response.Status,
+		"message":       response.Message,
+		"help_requests": response.HelpRequests,
+	})
+}

@@ -32,9 +32,9 @@ type UsersData struct {
 }
 
 type UsersResponse struct {
-	Status  int         `json:"status"`
-	Message string      `json:"message"`
-	Data    []UsersData `json:"data"`
+	Status  int       `json:"status"`
+	Message string    `json:"message"`
+	Data    UsersData `json:"data"`
 }
 
 type AllUsersResponse struct {
@@ -92,6 +92,7 @@ type UpdateHelpRequest struct {
 type HelpRequestData struct {
 	ID          uint   `json:"id"`
 	UserID      uint   `json:"user_id"`
+	Username    string `json:"username"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Category    string `json:"category"`

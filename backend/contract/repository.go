@@ -28,7 +28,7 @@ type HelpRequestRepository interface {
 	CreateHelpRequest(payload *models.HelpRequest) error
 	GetAllHelpRequests() ([]*models.HelpRequest, error)
 	GetHelpRequestByID(id uint) (*models.HelpRequest, error)
-	GetHelpRequestByUserID(id uint) (*models.HelpRequest, error)
+	GetHelpRequestByUserID(id uint) ([]*models.HelpRequest, error)
 	GetNearbyHelpRequests(lat, lon float64, excludeUserID uint, radiusMeters float64) ([]*models.NearbyHelpRequest, error)
 	UpdateHelpRequest(payload *models.HelpRequest) error
 }

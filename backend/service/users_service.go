@@ -69,15 +69,13 @@ func (u *UsersService) Register(payload *dto.UsersRequest) (*dto.UsersResponse, 
 	response := &dto.UsersResponse{
 		Status:  http.StatusCreated,
 		Message: "User Registered Successfully",
-		Data: []dto.UsersData{
-			{
-				ID:              userModel.ID,
-				Username:        userModel.Username,
-				FullName:        userModel.FullName,
-				Address:         userModel.Address,
-				Coordinate_lat:  userModel.Coordinate_lat,
-				Coordinate_long: userModel.Coordinate_long,
-			},
+		Data: dto.UsersData{
+			ID:              userModel.ID,
+			Username:        userModel.Username,
+			FullName:        userModel.FullName,
+			Address:         userModel.Address,
+			Coordinate_lat:  userModel.Coordinate_lat,
+			Coordinate_long: userModel.Coordinate_long,
 		},
 	}
 	return response, nil
@@ -158,15 +156,13 @@ func (u *UsersService) UpdateUser(username string, payload *dto.UpdateUserReques
 	response := &dto.UsersResponse{
 		Status:  http.StatusOK,
 		Message: "Update Success",
-		Data: []dto.UsersData{
-			{
-				ID:              user.ID,
-				Username:        user.Username,
-				FullName:        user.FullName,
-				Address:         user.Address,
-				Coordinate_lat:  user.Coordinate_lat,
-				Coordinate_long: user.Coordinate_long,
-			},
+		Data: dto.UsersData{
+			ID:              user.ID,
+			Username:        user.Username,
+			FullName:        user.FullName,
+			Address:         user.Address,
+			Coordinate_lat:  user.Coordinate_lat,
+			Coordinate_long: user.Coordinate_long,
 		},
 	}
 	return response, nil
@@ -211,15 +207,13 @@ func (u *UsersService) GetUserByID(id uint) (*dto.UsersResponse, error) {
 	response := &dto.UsersResponse{
 		Status:  http.StatusOK,
 		Message: "User retrieved successfully",
-		Data: []dto.UsersData{
-			{
-				ID:              user.ID,
-				Username:        user.Username,
-				FullName:        user.FullName,
-				Address:         user.Address,
-				Coordinate_lat:  user.Coordinate_lat,
-				Coordinate_long: user.Coordinate_long,
-			},
+		Data: dto.UsersData{
+			ID:              user.ID,
+			Username:        user.Username,
+			FullName:        user.FullName,
+			Address:         user.Address,
+			Coordinate_lat:  user.Coordinate_lat,
+			Coordinate_long: user.Coordinate_long,
 		},
 	}
 	return response, nil

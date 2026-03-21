@@ -30,19 +30,18 @@ func (r *helpRequestRepository) GetAllHelpRequests() ([]*models.HelpRequest, err
 	return helpRequests, nil
 }
 
-func (r *helpRequestRepository) GetHelpRequestByUserID(id uint) (*models.HelpRequest, error) {
-	var helpRequest models.HelpRequest
-	query := `
-		SELECT * FROM help_requests
-		WHERE user_id = ?
-		ORDER BY created_at DESC
-		LIMIT 1
-	`
+func (r *helpRequestRepository) GetHelpRequestByUserID(id uint) ([]*models.HelpRequest, error) {
+	var helpRequests []*models.HelpRequest
 
-	if err := r.db.Raw(query, id).Scan(&helpRequest).Error; err != nil {
+	if err := r.db.
+		Table("help_requests").
+		Select("help_requests.*, users.username AS username").
+		Joins("JOIN users ON users.id = help_requests.user_id").
+		Where("help_requests.user_id = ?", id).
+		Find(&helpRequests).Error; err != nil {
 		return nil, err
 	}
-	return &helpRequest, nil
+	return helpRequests, nil
 }
 
 func (r *helpRequestRepository) GetHelpRequestByID(id uint) (*models.HelpRequest, error) {
@@ -60,8 +59,24 @@ func (r *helpRequestRepository) UpdateHelpRequest(payload *models.HelpRequest) e
 func (r *helpRequestRepository) GetNearbyHelpRequests(lat, lon float64, excludeUserID uint, radiusMeters float64) ([]*models.NearbyHelpRequest, error) {
 	var helpRequests []*models.NearbyHelpRequest
 
-	query := `
-		SELECT
+	subQuery := r.db.
+		Table("users u").
+		Select(`
+			u.id AS user_id,
+			u.username,
+			(6371000 * acos(
+				LEAST(1.0,
+					cos(radians(?)) * cos(radians(u.coordinate_lat)) *
+					cos(radians(u.coordinate_long) - radians(?)) +
+					sin(radians(?)) * sin(radians(u.coordinate_lat))
+				)
+			)) AS distance
+		`, lat, lon, lat).
+		Where("u.id != ?", excludeUserID)
+
+	if err := r.db.
+		Table("help_requests hr").
+		Select(`
 			hr.id,
 			hr.user_id,
 			hr.title,
@@ -71,26 +86,12 @@ func (r *helpRequestRepository) GetNearbyHelpRequests(lat, lon float64, excludeU
 			hr.status,
 			hr.created_at,
 			sub.distance
-		FROM help_requests hr
-		JOIN (
-			SELECT
-				u.id AS user_id,
-				u.username,
-				(6371000 * acos(
-					LEAST(1.0,
-						cos(radians(?)) * cos(radians(u.coordinate_lat)) *
-						cos(radians(u.coordinate_long) - radians(?)) +
-						sin(radians(?)) * sin(radians(u.coordinate_lat))
-					)
-				)) AS distance
-			FROM users u
-			WHERE u.id != ?
-		) sub ON hr.user_id = sub.user_id
-		WHERE sub.distance < ?
-		ORDER BY sub.distance ASC, hr.created_at DESC
-	`
-
-	if err := r.db.Raw(query, lat, lon, lat, excludeUserID, radiusMeters).Scan(&helpRequests).Error; err != nil {
+		`).
+		Joins("JOIN (?) sub ON hr.user_id = sub.user_id", subQuery).
+		Where("sub.distance < ?", radiusMeters).
+		Order("sub.distance ASC").
+		Order("hr.created_at DESC").
+		Scan(&helpRequests).Error; err != nil {
 		return nil, err
 	}
 	return helpRequests, nil

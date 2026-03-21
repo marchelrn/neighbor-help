@@ -18,7 +18,7 @@ const (
 
 type HelpRequest struct {
 	ID          uint     `gorm:"primaryKey;autoIncrement"`
-	Username    string   `gorm:"foreignKey:username"`
+	Username    string   `gorm:"->;column:username"`
 	UserID      int      `gorm:"not null"`
 	Title       string   `gorm:"type:varchar(255);not null"`
 	Description string   `gorm:"type:varchar(255);not null"`

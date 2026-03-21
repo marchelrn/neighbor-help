@@ -72,15 +72,19 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 	auth := r.Group("/")
 	auth.Use(middleware.AuthMiddleware())
 	{
+		// User
 		auth.GET("/users", userController.GetUsers)
 		auth.GET("/user/:id", userController.GetUserByID)
 		auth.PUT("/user/:username", userController.UpdateUser)
 		auth.GET("/nearby", userController.GetNearbyUsers)
+
+		// Help Request
 		auth.POST("/help", helpRequestController.CreateHelpRequest)
 		auth.GET("/help/nearby", helpRequestController.GetNearbyHelpRequests)
 		auth.GET("/help", helpRequestController.GetAllHelpRequests)
 		auth.PUT("/help/:id", helpRequestController.UpdateHelpRequest)
 		auth.GET("/help/:id/messages", chatController.GetMessages)
+		auth.GET("/my-help", helpRequestController.GetHelpRequestByUserID)
 	}
 	return r
 }

@@ -29,6 +29,7 @@ type HelpRequestService interface {
 	GetAllHelpRequests() (*dto.HelpRequestResponse, error)
 	GetNearbyHelpRequests(username string) (*dto.NearbyHelpRequestResponse, error)
 	GetHelpRequestByID(helpRequestID uint) (*dto.HelpRequestResponse, error)
+	GetHelpRequestByUserID(userID uint) (*dto.HelpRequestResponse, error)
 	UpdateHelpRequest(userID uint, helpRequestID uint, payload *dto.UpdateHelpRequest) (*dto.HelpRequestResponse, error)
 }
 
