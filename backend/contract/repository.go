@@ -21,7 +21,7 @@ type UsersRepository interface {
 	GetUserByUsername(username string) (*models.Users, error)
 	GetNearbyUsers(lat, lon float64, radius float64, excludeID uint) ([]*models.NearbyUser, error)
 	CreateUser(user *models.Users) error
-	UpdateUser(payload *models.Users) error
+	UpdateUser(username string, payload *models.Users) error
 }
 
 type HelpRequestRepository interface {

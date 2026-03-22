@@ -148,7 +148,7 @@ func (u *UsersService) UpdateUser(username string, payload *dto.UpdateUserReques
 		user.Coordinate_long = *payload.Coordinate_long
 	}
 
-	err = u.UserRepository.UpdateUser(user)
+	err = u.UserRepository.UpdateUser(username, user)
 	if err != nil {
 		return nil, errs.InternalServerError("Failed to update User")
 	}

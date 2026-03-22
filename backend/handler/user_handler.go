@@ -69,11 +69,12 @@ func (u *UserController) Login(c *gin.Context) {
 }
 
 func (u *UserController) UpdateUser(c *gin.Context) {
-	usernameParam := c.Param("username")
-	if usernameParam == "" {
-		HandleError(c, errs.BadRequest("Invalid username"))
-		return
+	usernameToken, exists := c.Get("Username")
+	if !exists {
+		HandleError(c, errs.Unauthorized("Unauthorized"))
 	}
+
+	usernameParam := c.Param("username")
 
 	var payload dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&payload); err != nil {
@@ -81,7 +82,12 @@ func (u *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	response, err := u.UserService.UpdateUser(usernameParam, &payload)
+	if usernameToken != usernameParam {
+		HandleError(c, errs.Unauthorized("You can only update your own account"))
+		return
+	}
+
+	response, err := u.UserService.UpdateUser(usernameToken.(string), &payload)
 	if err != nil {
 		HandleError(c, err)
 		return
@@ -89,7 +95,7 @@ func (u *UserController) UpdateUser(c *gin.Context) {
 
 	c.JSON(response.Status, gin.H{
 		"message": response.Message,
-		"resp":    response.Data,
+		"data":    response.Data,
 	})
 }
 
