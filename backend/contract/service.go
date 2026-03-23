@@ -21,7 +21,7 @@ type UsersService interface {
 	GetNearbyUsers(username string) (*dto.NearbyUsersResponse, error)
 	Register(payload *dto.UsersRequest) (*dto.UsersResponse, error)
 	Login(payload *dto.LoginRequest) (*dto.LoginResponse, error)
-	UpdateUser(username string, payload *dto.UpdateUserRequest) (*dto.UsersResponse, error)
+	UpdateUser(username string, usernameParam string, payload *dto.UpdateUserRequest) (*dto.UsersResponse, error)
 }
 
 type HelpRequestService interface {

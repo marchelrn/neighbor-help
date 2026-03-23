@@ -105,7 +105,7 @@ func (u *UsersService) Login(payload *dto.LoginRequest) (*dto.LoginResponse, err
 	return response, nil
 }
 
-func (u *UsersService) UpdateUser(username string, payload *dto.UpdateUserRequest) (*dto.UsersResponse, error) {
+func (u *UsersService) UpdateUser(username string, usernameParam string, payload *dto.UpdateUserRequest) (*dto.UsersResponse, error) {
 	user, err := u.UserRepository.GetUserByUsername(username)
 	if err != nil {
 		return nil, errs.NotFound("User Not Found")
@@ -120,6 +120,10 @@ func (u *UsersService) UpdateUser(username string, payload *dto.UpdateUserReques
 			return nil, errs.Conflict("Username already taken")
 		}
 		user.Username = *payload.Username
+	}
+
+	if username != usernameParam {
+		return nil, errs.Unauthorized("You can only update your own account")
 	}
 
 	if payload.Password != nil {

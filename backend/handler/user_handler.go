@@ -82,12 +82,7 @@ func (u *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if usernameToken != usernameParam {
-		HandleError(c, errs.Unauthorized("You can only update your own account"))
-		return
-	}
-
-	response, err := u.UserService.UpdateUser(usernameToken.(string), &payload)
+	response, err := u.UserService.UpdateUser(usernameToken.(string), usernameParam, &payload)
 	if err != nil {
 		HandleError(c, err)
 		return
