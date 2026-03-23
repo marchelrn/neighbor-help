@@ -184,12 +184,10 @@ http://localhost:8080
 
 ### Public Routes
 
-Tidak membutuhkan token.
-
 #### `GET /health`
-Mengecek status API.
+Status API.
 
-**Response:**
+**Response `200`:**
 ```json
 {
   "message": "API is healthy"
@@ -216,14 +214,23 @@ Mendaftarkan user baru.
 **Response `201`:**
 ```json
 {
-  "message": "User Registered Successfully"
+  "status": 201,
+  "message": "User Registered Successfully",
+  "data": {
+    "id": 1,
+    "username": "john_doe",
+    "full_name": "John Doe",
+    "address": "Jl. Merdeka No. 1, Jakarta",
+    "coordinate_lat": -6.2088,
+    "coordinate_long": 106.8456
+  }
 }
 ```
 
 ---
 
 #### `POST /login`
-Login dan mendapatkan JWT token.
+Menerima JWT token.
 
 **Request Body:**
 ```json
@@ -236,7 +243,8 @@ Login dan mendapatkan JWT token.
 **Response `200`:**
 ```json
 {
-  "message": "Login success",
+  "status": 200,
+  "message": "Login Success",
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
@@ -253,40 +261,14 @@ Authorization: Bearer <token>
 ---
 
 #### `GET /users`
-Mengambil semua data user.
-
-**Response `200`:**
-```json
-{
-  "message": "Users retrieved successfully",
-  "data": {
-    "data": [
-      {
-        "id": 1,
-        "username": "john_doe",
-        "full_name": "John Doe",
-        "address": "Jl. Merdeka No. 1, Jakarta",
-        "coordinate_lat": -6.2088,
-        "coordinate_long": 106.8456
-      }
-    ]
-  }
-}
-```
-
----
-
-#### `GET /user/:id`
-Mengambil data user berdasarkan ID.
-
-**Path Param:** `id` — ID user (integer)
+Mengambil semua user.
 
 **Response `200`:**
 ```json
 {
   "status": 200,
-  "message": "User retrieved successfully",
-  "data": [
+  "message": "Users retrieved successfully",
+  "users": [
     {
       "id": 1,
       "username": "john_doe",
@@ -301,12 +283,31 @@ Mengambil data user berdasarkan ID.
 
 ---
 
+#### `GET /user/:id`
+Mengambil satu user berdasarkan ID path parameter.
+
+**Response `200`:**
+```json
+{
+  "status": 200,
+  "message": "User retrieved successfully",
+  "user": {
+    "id": 1,
+    "username": "john_doe",
+    "full_name": "John Doe",
+    "address": "Jl. Merdeka No. 1, Jakarta",
+    "coordinate_lat": -6.2088,
+    "coordinate_long": 106.8456
+  }
+}
+```
+
+---
+
 #### `PUT /user/:username`
-Update data user berdasarkan username.
+Memperbarui profil user sendiri. Semua field pada body bersifat opsional.
 
-**Path Param:** `username` — username saat ini
-
-**Request Body** (semua field opsional):
+**Request Body Contoh:**
 ```json
 {
   "username": "john_new",
@@ -318,25 +319,32 @@ Update data user berdasarkan username.
 }
 ```
 
-> Kosongkan field yang tidak ingin diubah. `username` di body diisi hanya jika ingin mengganti username.
-
 **Response `200`:**
 ```json
 {
-  "message": "Update Success"
+  "status": 200,
+  "message": "Update Success",
+  "data": {
+    "id": 1,
+    "username": "john_new",
+    "full_name": "John Doe Updated",
+    "address": "Jl. Baru No. 10",
+    "coordinate_lat": -6.2100,
+    "coordinate_long": 106.8300
+  }
 }
 ```
 
 ---
 
 #### `GET /nearby`
-Mengambil daftar user yang berada dalam radius **500 meter** dari lokasi user yang sedang login. Lokasi diambil otomatis dari data user yang tersimpan di database.
-
-> Username diambil dari JWT token secara otomatis — tidak perlu mengirim parameter apapun.
+Menampilkan user lain yang berada dalam radius 500 meter dari posisi yang tersimpan di profile.
 
 **Response `200`:**
 ```json
 {
+  "status": 200,
+  "message": "Nearby users retrieved successfully",
   "users": [
     {
       "id": 3,
@@ -360,13 +368,186 @@ Mengambil daftar user yang berada dalam radius **500 meter** dari lokasi user ya
 }
 ```
 
-> `distance` dalam satuan **meter**. Hasil diurutkan dari yang terdekat.
+`distance` dalam meter; hasil diurutkan dari yang terdekat.
 
 ---
 
- Error Response
+#### `POST /help`
+Meminta bantuan baru. `category` wajib bernilai `urgent` atau `normal`.
 
-Semua error mengikuti format:
+**Request Body:**
+```json
+{
+  "title": "Butuh obat",
+  "description": "Permisi, saya butuh obat demam satu strip",
+  "category": "urgent"
+}
+```
+
+**Response `200`:**
+```json
+{
+  "status": 200,
+  "message": "Help request created successfully",
+  "help_requests": [
+    {
+      "id": 1,
+      "user_id": 5,
+      "title": "Butuh obat",
+      "description": "Permisi, saya butuh obat demam satu strip",
+      "category": "urgent",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+---
+
+#### `GET /help/nearby`
+Menampilkan request dari user lain yang berada dalam radius 500 meter serta jarak dan waktu dibuat.
+
+**Response `200`:**
+```json
+{
+  "status": 200,
+  "message": "Nearby help requests retrieved successfully",
+  "help_requests": [
+    {
+      "id": 10,
+      "user_id": 2,
+      "username": "sarah_maulana",
+      "title": "Kebutuhan sembako",
+      "description": "Butuh beras 5kg",
+      "category": "normal",
+      "status": "pending",
+      "created_at": "2026-03-20T12:45:00Z",
+      "distance_m": 342.78
+    }
+  ]
+}
+```
+
+`distance_m` dalam meter.
+
+---
+
+#### `GET /help`
+Menampilkan semua help request (semua user).
+
+**Response `200`:**
+```json
+{
+  "status": 200,
+  "message": "All Help requests retrieved successfully",
+  "help_requests": [
+    {
+      "id": 1,
+      "user_id": 5,
+      "username": "john_doe",
+      "title": "Butuh obat",
+      "description": "Permisi, saya butuh obat demam satu strip",
+      "category": "urgent",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+---
+
+#### `PUT /help/:id`
+Memperbarui help request yang dibuat sendiri (status hanya `pending`/`resolved`, category hanya `urgent`/`normal`).
+
+**Request Body Contoh:**
+```json
+{
+  "title": "Butuh obat dan susu",
+  "category": "normal",
+  "status": "resolved"
+}
+```
+
+**Response `200`:**
+```json
+{
+  "status": 200,
+  "message": "Help request updated successfully",
+  "help_requests": [
+    {
+      "id": 1,
+      "user_id": 5,
+      "title": "Butuh obat dan susu",
+      "description": "Permisi, saya butuh obat demam satu strip",
+      "category": "normal",
+      "status": "resolved"
+    }
+  ]
+}
+```
+
+---
+
+#### `GET /help/:id/messages`
+Mengambil history pesan untuk help request tertentu. Status harus `pending` agar bisa chat.
+
+**Response `200`:**
+```json
+{
+  "status": 200,
+  "message": "Messages retrieved successfully",
+  "message_data": [
+    {
+      "id": 23,
+      "request_id": 1,
+      "sender_id": 2,
+      "reciever_id": 5,
+      "content": "Apakah masih butuh bantuan?",
+      "created_at": "2026-03-21T09:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+#### `GET /my-help`
+Menampilkan semua help request yang dibuat oleh user saat ini.
+
+**Response `200`:**
+```json
+{
+  "status": 200,
+  "message": "Help requests for user 5 retrieved successfully",
+  "help_requests": [
+    {
+      "id": 1,
+      "user_id": 5,
+      "username": "john_doe",
+      "title": "Butuh obat",
+      "description": "Permisi, saya butuh obat demam satu strip",
+      "category": "urgent",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+---
+
+#### `GET /ws/help/:id/chat`
+WebSocket untuk chat satu help request (token harus disertakan sebagai query string). 
+
+1. Ambil JWT dari `/login`.
+2. Sambungkan ke `ws://localhost:8080/ws/help/{id}/chat?token=<jwt>`.
+3. Server langsung mengirim payload `{"type":"history","messages":[...]}` lalu meneruskan pesan baru ke semua peserta.
+4. Ketika mengirim pesan, cukup kirim body string (Hub menambahkan metadata, simpan ke database, lalu mem-broadcast JSON `{ "sender_id", "sender_username", "message", "sent_at" }` ke peserta lain).
+
+Peserta hanya dapat masuk jika jarak ke requester kurang dari 500 meter dan request masih `pending`.
+
+---
+
+Error responses mengikuti format:
 
 ```json
 {
