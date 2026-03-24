@@ -38,6 +38,14 @@ func (r *UsersRepository) GetUserByID(id uint) (*models.Users, error) {
 	return &user, nil
 }
 
+func (r *UsersRepository) GetUsernameByID(id uint) string {
+	var user models.Users
+	if err := r.db.Select("username").First(&user, id).Error; err != nil {
+		return ""
+	}
+	return user.Username
+}
+
 func (r *UsersRepository) GetUserByUsername(username string) (*models.Users, error) {
 	var user models.Users
 	if err := r.db.First(&user, "username = ?", username).Error; err != nil {

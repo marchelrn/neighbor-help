@@ -112,7 +112,7 @@ func (u *UserController) GetUserByID(c *gin.Context) {
 	userIdParam := c.Param("id")
 	var userId uint
 	_, err := fmt.Sscanf(userIdParam, "%d", &userId)
-	if err != nil || userId <= 0 {
+	if err != nil {
 		HandleError(c, errs.BadRequest("Invalid User ID"))
 		return
 	}

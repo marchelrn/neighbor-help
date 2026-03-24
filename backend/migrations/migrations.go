@@ -19,6 +19,7 @@ func getMigrations() []migration {
 		getCreateHelpRequestTable(),
 		getCreateReputationLogsTable(),
 		getCreateMessagesTable(),
+		getCreateNotificationsTable(),
 	}
 }
 

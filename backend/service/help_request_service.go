@@ -8,17 +8,20 @@ import (
 	errs "neighbor_help/pkg/error"
 	"neighbor_help/utils"
 	"net/http"
+	"time"
 )
 
 type HelpRequestService struct {
-	HelpRequestRepository contract.HelpRequestRepository
-	UsersRepository       contract.UsersRepository
+	HelpRequestRepository  contract.HelpRequestRepository
+	UsersRepository        contract.UsersRepository
+	NotificationRepository contract.NotificationRepository
 }
 
-func implHelpRequestService(helpRepo contract.HelpRequestRepository, usersRepo contract.UsersRepository) *HelpRequestService {
+func implHelpRequestService(helpRepo contract.HelpRequestRepository, usersRepo contract.UsersRepository, notificationRepo contract.NotificationRepository) *HelpRequestService {
 	return &HelpRequestService{
-		HelpRequestRepository: helpRepo,
-		UsersRepository:       usersRepo,
+		HelpRequestRepository:  helpRepo,
+		UsersRepository:        usersRepo,
+		NotificationRepository: notificationRepo,
 	}
 }
 
@@ -42,13 +45,25 @@ func (s *HelpRequestService) CreateHelpRequest(userID uint, payload *dto.HelpReq
 
 	helpRequest := &models.HelpRequest{
 		ID:          payload.UserID,
-		UserID:      int(userID),
+		UserID:      userID,
 		Title:       payload.Title,
 		Description: payload.Description,
 		Category:    category,
 		Status:      status,
 	}
 	err := s.HelpRequestRepository.CreateHelpRequest(helpRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.NotificationRepository.CreateNotification(&models.Notifications{
+		HelpRequestID: &helpRequest.ID,
+		UserID:        &helpRequest.UserID,
+		Title:         fmt.Sprintf("New help request: %s", helpRequest.Title),
+		Username:      s.UsersRepository.GetUsernameByID(helpRequest.UserID),
+		Read:          false,
+		Created_at:    time.Now(),
+	})
 	if err != nil {
 		return nil, err
 	}

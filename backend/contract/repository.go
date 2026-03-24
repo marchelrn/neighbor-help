@@ -5,10 +5,11 @@ import (
 )
 
 type Repository struct {
-	HealthRepository      HealthRepository
-	UsersRepository       UsersRepository
-	HelpRequestRepository HelpRequestRepository
-	MessagesRepository    MessagesRepository
+	HealthRepository       HealthRepository
+	UsersRepository        UsersRepository
+	HelpRequestRepository  HelpRequestRepository
+	MessagesRepository     MessagesRepository
+	NotificationRepository NotificationRepository
 }
 
 type HealthRepository interface {
@@ -20,6 +21,7 @@ type UsersRepository interface {
 	GetUserByID(id uint) (*models.Users, error)
 	GetUserByUsername(username string) (*models.Users, error)
 	GetNearbyUsers(lat, lon float64, radius float64, excludeID uint) ([]*models.NearbyUser, error)
+	GetUsernameByID(id uint) string
 	CreateUser(user *models.Users) error
 	UpdateUser(username string, payload *models.Users) error
 }
@@ -37,4 +39,10 @@ type MessagesRepository interface {
 	GetMessagesByHelpRequestID(helpRequestID uint) ([]*models.Messages, error)
 	CreateMessage(payload *models.Messages) error
 	SaveMessage(payload *models.Messages) error
+}
+
+type NotificationRepository interface {
+	// GetNotificationsByUserID(userID uint) ([]*models.Notifications, error)
+	CreateNotification(payload *models.Notifications) error
+	// UpdateNotification(payload *models.Notifications) error
 }
