@@ -66,12 +66,14 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 		api.GET("/health", healthController.GetStatus)
 		api.POST("/register", userController.Register)
 		api.POST("/login", userController.Login)
-		api.GET("/ws/help/:id/chat", chatController.JoinChat)
 	}
 
 	auth := r.Group("/")
 	auth.Use(middleware.AuthMiddleware())
 	{
+		// User Chatting
+		api.GET("/ws/help/:id/chat", chatController.JoinChat)
+
 		// User
 		auth.GET("/users", userController.GetUsers)
 		auth.GET("/user/:id", userController.GetUserByID)
