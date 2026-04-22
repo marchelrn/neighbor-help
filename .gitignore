@@ -1,0 +1,6 @@
+backend/.env
+backend/*.log
+backend/*.out
+backend/bin/
+backend/tmp/
+/frontend

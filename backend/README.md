@@ -140,12 +140,16 @@ cd backend
 PORT=8080
 ENV=development
 
+
+# Prod
+DB_URL=
+
 # Database
-DB_USER=postgres
-DB_PASS=yourpassword
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=neighbor_help
+DB_USER={user}
+DB_PASS={password}
+DB_HOST={host}
+DB_PORT={port}
+DB_NAME={name}
 
 # JWT
 JWT_SECRET=your_super_secret_key_minimum_32_chars

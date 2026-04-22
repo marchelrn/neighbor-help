@@ -4,3 +4,5 @@
 bin/
 tmp/
 testing_json/
+.air.toml
+.idea/

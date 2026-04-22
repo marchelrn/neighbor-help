@@ -22,7 +22,11 @@ func GetConfig() *Config {
 	return config
 }
 
+
 func Load() {
+	isProd := true
+	isProd = utils.SafeCompareString(os.Getenv("ENV"), "production")
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Printf("Error loading .env file: %v", err)
@@ -32,19 +36,17 @@ func Load() {
 	if err != nil {
 		port = 8080
 	}
-
-	isProd := utils.SafeCompareString(os.Getenv("ENV"), "production")
+	
 
 	config = &Config{
 		Port:      strconv.Itoa(port),
 		IsProd:    isProd,
-		DBUrl:     Production(),
+		DBUrl:     Production(isProd),
 		JWTSecret: os.Getenv("JWT_SECRET"),
 	}
 }
 
-func Production() string {
-	isProd := utils.SafeCompareString(os.Getenv("ENV"), "production")
+func Production(isProd bool) string {
 	if !isProd {
 		log.Println("Using local database")
 		return LocalDB()
