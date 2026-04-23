@@ -86,7 +86,6 @@ func (h *HelpRequestController) UpdateHelpRequest(c *gin.Context) {
 	c.JSON(response.Status, gin.H{
 		"status":        response.Status,
 		"message":       response.Message,
-		"help_requests": response.HelpRequests,
 	})
 }
 

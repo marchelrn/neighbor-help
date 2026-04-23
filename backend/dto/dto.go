@@ -162,3 +162,10 @@ type ChatAccessResult struct {
 	CurrentUserID   uint   `json:"current_user_id"`
 	CurrentUsername string `json:"current_username"`
 }
+
+// Basic Response 
+
+type BasicResponse struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}

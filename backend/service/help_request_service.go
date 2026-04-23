@@ -154,7 +154,7 @@ func (s *HelpRequestService) GetNearbyHelpRequests(username string) (*dto.Nearby
 	return response, nil
 }
 
-func (s *HelpRequestService) UpdateHelpRequest(userID uint, helpRequestID uint, payload *dto.UpdateHelpRequest) (*dto.HelpRequestResponse, error) {
+func (s *HelpRequestService) UpdateHelpRequest(userID uint, helpRequestID uint, payload *dto.UpdateHelpRequest) (*dto.BasicResponse, error) {
 	helpReq, err := s.HelpRequestRepository.GetHelpRequestByID(helpRequestID)
 	if err != nil {
 		return nil, errs.InternalServerError("Failed to get help request")
@@ -191,20 +191,12 @@ func (s *HelpRequestService) UpdateHelpRequest(userID uint, helpRequestID uint, 
 		return nil, err
 	}
 
-	return &dto.HelpRequestResponse{
+	response := &dto.BasicResponse{
 		Status:  http.StatusOK,
 		Message: "Help request updated successfully",
-		HelpRequests: []dto.HelpRequestData{
-			{
-				ID:          helpReq.ID,
-				UserID:      uint(helpReq.UserID),
-				Title:       helpReq.Title,
-				Description: helpReq.Description,
-				Category:    string(helpReq.Category),
-				Status:      string(helpReq.Status),
-			},
-		},
-	}, nil
+	}
+
+	return response, nil
 }
 
 func (s *HelpRequestService) GetHelpRequestByID(id uint) (*dto.HelpRequestResponse, error) {

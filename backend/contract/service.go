@@ -30,7 +30,7 @@ type HelpRequestService interface {
 	GetNearbyHelpRequests(username string) (*dto.NearbyHelpRequestResponse, error)
 	GetHelpRequestByID(helpRequestID uint) (*dto.HelpRequestResponse, error)
 	GetHelpRequestByUserID(userID uint) (*dto.HelpRequestResponse, error)
-	UpdateHelpRequest(userID uint, helpRequestID uint, payload *dto.UpdateHelpRequest) (*dto.HelpRequestResponse, error)
+	UpdateHelpRequest(userID uint, helpRequestID uint, payload *dto.UpdateHelpRequest) (*dto.BasicResponse, error)
 }
 
 type ChatService interface {

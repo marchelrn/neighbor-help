@@ -1,17 +1,16 @@
 package config
 
 import (
+	"fmt"
 	"log"
-	"neighbor_help/utils"
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
 	Port      string
-	IsProd    bool
+	Env       string
 	DBUrl     string
 	JWTSecret string
 }
@@ -24,47 +23,45 @@ func GetConfig() *Config {
 
 
 func Load() {
-	isProd := true
-	isProd = utils.SafeCompareString(os.Getenv("ENV"), "production")
-
-	err := godotenv.Load()
-	if err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Printf("Error loading .env file: %v", err)
 	}
 
-	port, err := strconv.Atoi(os.Getenv("PORT"))
-	if err != nil {
-		port = 8080
+	env := os.Getenv("ENV")
+	if env == "" || (env != "development" && env != "production" && env != "testing") {
+		env = "development"
 	}
 	
 
 	config = &Config{
-		Port:      strconv.Itoa(port),
-		IsProd:    isProd,
-		DBUrl:     Production(isProd),
+		Port:      getEnv("PORT", "3000"),
+		Env:       env,
+		DBUrl:     buildDbUrl(env),
 		JWTSecret: os.Getenv("JWT_SECRET"),
 	}
 }
 
-func Production(isProd bool) string {
-	if !isProd {
-		log.Println("Using local database")
-		return LocalDB()
+func buildDbUrl(env string) string {
+	if env == "production" {
+		return os.Getenv("DB_URL")
 	}
-	log.Println("Using production database")
-	db_url := os.Getenv("DB_URL")
-	if db_url == "" {
-		log.Fatal("DB_URL environment variable is not set")
+
+	dbUser := os.Getenv("DB_USER")
+	dbPass := os.Getenv("DB_PASS")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	
+	dbName := os.Getenv("DB_DEV_NAME")
+	if env == "testing" {
+		dbName = os.Getenv("DB_TESTING_NAME")
 	}
-	return db_url
+
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", dbUser, dbPass, dbHost, dbPort, dbName)
 }
 
-func LocalDB() string {
-	db_user := os.Getenv("DB_USER")
-	db_pass := os.Getenv("DB_PASS")
-	db_host := os.Getenv("DB_HOST")
-	db_port := os.Getenv("DB_PORT")
-	db_name := os.Getenv("DB_NAME")
-
-	return "postgres://" + db_user + ":" + db_pass + "@" + db_host + ":" + db_port + "/" + db_name
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }

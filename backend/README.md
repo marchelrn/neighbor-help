@@ -475,18 +475,8 @@ Memperbarui help request yang dibuat sendiri (status hanya `pending`/`resolved`,
 **Response `200`:**
 ```json
 {
-  "status": 200,
   "message": "Help request updated successfully",
-  "help_requests": [
-    {
-      "id": 1,
-      "user_id": 5,
-      "title": "Butuh obat dan susu",
-      "description": "Permisi, saya butuh obat demam satu strip",
-      "category": "normal",
-      "status": "resolved"
-    }
-  ]
+  "status": 200
 }
 ```
 

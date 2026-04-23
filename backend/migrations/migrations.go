@@ -64,7 +64,7 @@ func Up(db *sql.DB) {
 
 		if count == 0 {
 			println("Executing migration:", m.Name())
-			if cfg.IsProd && m.SkipProd() {
+			if cfg.Env != "production" && m.SkipProd() {
 				continue
 			}
 			if err := m.Up(tx); err != nil {

@@ -23,7 +23,7 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 	cfg := config.GetConfig()
 
 	var limitter int64
-	if cfg.IsProd == false {
+	if cfg.Env != "production" {
 		limitter = 1000
 	} else {
 		limitter = 100

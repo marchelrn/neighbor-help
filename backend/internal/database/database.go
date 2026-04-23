@@ -18,13 +18,13 @@ func ConnectDB() (*gorm.DB, *sql.DB) {
 	var isProd bool
 	var loggerLevel logger.LogLevel
 
-	if cfg.IsProd == false {
+	if cfg.Env != "production" {
 		loggerLevel = logger.Info
 	} else {
 		loggerLevel = logger.Error
 	}
 
-	if cfg.IsProd == true {
+	if cfg.Env == "production" {
 		isProd = true
 	} else {
 		isProd = false
