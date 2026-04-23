@@ -23,11 +23,14 @@ func (m CreateNotificationsTable) Up(conn *sql.Tx) error {
 	_, err := conn.Exec(`
 		CREATE TABLE IF NOT EXISTS notifications (
 			id SERIAL PRIMARY KEY,
+			help_request_id INT NOT NULL,
 			user_id INT NOT NULL,
+			username VARCHAR(255) NOT NULL,
 			title TEXT NOT NULL,
 			is_read BOOLEAN NOT NULL DEFAULT FALSE,
 			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id)
+			CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id),
+			CONSTRAINT fk_help_request_id FOREIGN KEY (help_request_id) REFERENCES help_requests(id)
 		);
 	`)
 	log.Println("Creating up migrations : CreateNotificationsTable")

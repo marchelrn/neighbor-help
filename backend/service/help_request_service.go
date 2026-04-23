@@ -46,30 +46,33 @@ func (s *HelpRequestService) CreateHelpRequest(userID uint, payload *dto.HelpReq
 	helpRequest := &models.HelpRequest{
 		ID:          payload.UserID,
 		UserID:      userID,
+		Username:    s.UsersRepository.GetUsernameByID(userID),
 		Title:       payload.Title,
 		Description: payload.Description,
 		Category:    category,
 		Status:      status,
 	}
-	err := s.HelpRequestRepository.CreateHelpRequest(helpRequest)
-	if err != nil {
-		return nil, err
-	}
 
-	err = s.NotificationRepository.CreateNotification(&models.Notifications{
+	err := s.NotificationRepository.CreateNotification(&models.Notifications{
 		HelpRequestID: &helpRequest.ID,
 		UserID:        &helpRequest.UserID,
 		Title:         fmt.Sprintf("New help request: %s", helpRequest.Title),
-		Username:      s.UsersRepository.GetUsernameByID(helpRequest.UserID),
-		Read:          false,
+		Username:      s.UsersRepository.GetUsernameByID(userID),
+		IsRead:        false,
 		Created_at:    time.Now(),
 	})
 	if err != nil {
 		return nil, err
 	}
 
+	err = s.HelpRequestRepository.CreateHelpRequest(helpRequest)
+	if err != nil {
+		return nil, err
+	}
+	
 	response := []dto.HelpRequestData{{
 		ID:          helpRequest.ID,
+		Username:    helpRequest.Username,
 		UserID:      uint(helpRequest.UserID),
 		Title:       helpRequest.Title,
 		Description: helpRequest.Description,
@@ -99,6 +102,7 @@ func (s *HelpRequestService) GetAllHelpRequests() (*dto.HelpRequestResponse, err
 		response.HelpRequests = append(response.HelpRequests, dto.HelpRequestData{
 			ID:          helpRequest.ID,
 			UserID:      uint(helpRequest.UserID),
+			Username:    helpRequest.Username,
 			Title:       helpRequest.Title,
 			Description: helpRequest.Description,
 			Category:    string(helpRequest.Category),

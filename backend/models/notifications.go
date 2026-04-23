@@ -10,7 +10,7 @@ type Notifications struct {
 	UserID        *uint     `gorm:"not null"`
 	Title         string    `gorm:"type:text;not null"`
 	Username      string    `gorm:"type:varchar(255);not null"`
-	Read          bool      `gorm:"default:false"`
+	IsRead        bool    	`gorm:"column:is_read;default:false"`
 	Created_at    time.Time `gorm:"autoCreateTime"`
 }
 

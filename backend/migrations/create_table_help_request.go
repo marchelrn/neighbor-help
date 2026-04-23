@@ -24,6 +24,7 @@ func (m CreateHelpRequestTable) Up(conn *sql.Tx) error {
 		CREATE TABLE IF NOT EXISTS help_requests (
 			id SERIAL PRIMARY KEY,
 			user_id INT NOT NULL,
+			username VARCHAR(255) NOT NULL,
 			title TEXT NOT NULL,
 			description TEXT NOT NULL,
 			category TEXT NOT NULL,
