@@ -17,6 +17,7 @@ import 'peta_area_page.dart';
 import 'notification_page.dart';
 import 'login_page.dart';
 import 'admin/pages/admin_dashboard_page.dart';
+import 'admin/admin_main_layout.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -74,7 +75,7 @@ class _MainLayoutState extends State<MainLayout> {
 
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const AdminDashboardPage()),
+            MaterialPageRoute(builder: (_) => const AdminMainLayout()),
           );
 
           return;
