@@ -70,13 +70,13 @@ func (r *UsersRepository) GetNearbyUsers(lat, lon float64, radius float64, exclu
                 username,
                 full_name,
                 address,
-                coordinate_lat,
-                coordinate_long,
+                CoordinateLat,
+                CoordinateLong,
                 (6371000 * acos(
                     LEAST(1.0,
-                        cos(radians(?)) * cos(radians(coordinate_lat)) *
-                        cos(radians(coordinate_long) - radians(?)) +
-                        sin(radians(?)) * sin(radians(coordinate_lat))
+                        cos(radians(?)) * cos(radians(CoordinateLat)) *
+                        cos(radians(CoordinateLong) - radians(?)) +
+                        sin(radians(?)) * sin(radians(CoordinateLat))
                     )
                 )) AS distance
             FROM users

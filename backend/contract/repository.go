@@ -12,7 +12,7 @@ type Repository struct {
 	NotificationRepository NotificationRepository
 }
 
-type HealthRepository interface {
+type HealthRepository interface { 
 	GetStatus() (string, error)
 }
 
@@ -31,8 +31,15 @@ type HelpRequestRepository interface {
 	GetAllHelpRequests() ([]*models.HelpRequest, error)
 	GetHelpRequestByID(id uint) (*models.HelpRequest, error)
 	GetHelpRequestByUserID(id uint) ([]*models.HelpRequest, error)
-	GetNearbyHelpRequests(lat, lon float64, excludeUserID uint, radiusMeters float64) ([]*models.NearbyHelpRequest, error)
+	GetNearbyHelpRequests(
+		lat, lon float64,
+		excludeUserID uint,
+		radiusMeters float64,
+	) ([]*models.NearbyHelpRequest, error)
+
 	UpdateHelpRequest(payload *models.HelpRequest) error
+
+	DeleteHelpRequest(id uint) error
 }
 
 type MessagesRepository interface {

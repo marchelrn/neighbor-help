@@ -6,18 +6,18 @@ REST API backend untuk aplikasi **Neighbor Help**, platform yang menghubungkan w
 
 ## Tech Stack
 
-| Kategori | Teknologi | Versi |
-|---|---|---|
-| Language | Go | 1.25.7 |
-| Framework | Gin | v1.11.0 |
-| ORM | GORM | v1.31.1 |
-| Database | PostgreSQL | - |
-| Authentication | JWT (golang-jwt) | v5.3.1 |
+| Kategori         | Teknologi         | Versi   |
+| ---------------- | ----------------- | ------- |
+| Language         | Go                | 1.25.7  |
+| Framework        | Gin               | v1.11.0 |
+| ORM              | GORM              | v1.31.1 |
+| Database         | PostgreSQL        | -       |
+| Authentication   | JWT (golang-jwt)  | v5.3.1  |
 | Password Hashing | bcrypt (x/crypto) | v0.48.0 |
-| Hot Reload | Air | - |
-| CORS | gin-contrib/cors | v1.7.6 |
-| Rate Limiting | ulule/limiter | v3.11.2 |
-| Config | godotenv | v1.5.1 |
+| Hot Reload       | Air               | -       |
+| CORS             | gin-contrib/cors  | v1.7.6  |
+| Rate Limiting    | ulule/limiter     | v3.11.2 |
+| Config           | godotenv          | v1.5.1  |
 
 ---
 
@@ -95,7 +95,7 @@ backend/
 │ password       VARCHAR(255) │  └───▶│ title       TEXT                 │
 │ full_name      VARCHAR(255) │       │ description TEXT                 │
 │ address        VARCHAR(255) │       │ category    TEXT                 │
-│ coordinate_lat DECIMAL      │       │ status      TEXT                 │
+│ CoordinateLat DECIMAL      │       │ status      TEXT                 │
 │ coordinate_lng DECIMAL      │       │ created_at  TIMESTAMP            │
 └─────────────────────────────┘       └──────────────────────────────────┘
           │                                         │
@@ -180,6 +180,7 @@ go run main.go
 ## API Endpoints
 
 ### Base URL
+
 ```
 http://localhost:8080
 ```
@@ -189,9 +190,11 @@ http://localhost:8080
 ### Public Routes
 
 #### `GET /health`
+
 Status API.
 
 **Response `200`:**
+
 ```json
 {
   "message": "API is healthy"
@@ -201,21 +204,24 @@ Status API.
 ---
 
 #### `POST /register`
+
 Mendaftarkan user baru.
 
 **Request Body:**
+
 ```json
 {
   "username": "john_doe",
   "password": "Password123",
   "full_name": "John Doe",
   "address": "Jl. Merdeka No. 1, Jakarta",
-  "coordinate_lat": -6.2088,
-  "coordinate_long": 106.8456
+  "CoordinateLat": -6.2088,
+  "CoordinateLong": 106.8456
 }
 ```
 
 **Response `201`:**
+
 ```json
 {
   "status": 201,
@@ -225,8 +231,8 @@ Mendaftarkan user baru.
     "username": "john_doe",
     "full_name": "John Doe",
     "address": "Jl. Merdeka No. 1, Jakarta",
-    "coordinate_lat": -6.2088,
-    "coordinate_long": 106.8456
+    "CoordinateLat": -6.2088,
+    "CoordinateLong": 106.8456
   }
 }
 ```
@@ -234,9 +240,11 @@ Mendaftarkan user baru.
 ---
 
 #### `POST /login`
+
 Menerima JWT token.
 
 **Request Body:**
+
 ```json
 {
   "username": "john_doe",
@@ -245,6 +253,7 @@ Menerima JWT token.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "status": 200,
@@ -258,6 +267,7 @@ Menerima JWT token.
 ### Protected Routes
 
 Semua route di bawah membutuhkan header:
+
 ```
 Authorization: Bearer <token>
 ```
@@ -265,9 +275,11 @@ Authorization: Bearer <token>
 ---
 
 #### `GET /users`
+
 Mengambil semua user.
 
 **Response `200`:**
+
 ```json
 {
   "status": 200,
@@ -278,8 +290,8 @@ Mengambil semua user.
       "username": "john_doe",
       "full_name": "John Doe",
       "address": "Jl. Merdeka No. 1, Jakarta",
-      "coordinate_lat": -6.2088,
-      "coordinate_long": 106.8456
+      "CoordinateLat": -6.2088,
+      "CoordinateLong": 106.8456
     }
   ]
 }
@@ -288,9 +300,11 @@ Mengambil semua user.
 ---
 
 #### `GET /user/:id`
+
 Mengambil satu user berdasarkan ID path parameter.
 
 **Response `200`:**
+
 ```json
 {
   "status": 200,
@@ -300,8 +314,8 @@ Mengambil satu user berdasarkan ID path parameter.
     "username": "john_doe",
     "full_name": "John Doe",
     "address": "Jl. Merdeka No. 1, Jakarta",
-    "coordinate_lat": -6.2088,
-    "coordinate_long": 106.8456
+    "CoordinateLat": -6.2088,
+    "CoordinateLong": 106.8456
   }
 }
 ```
@@ -309,21 +323,24 @@ Mengambil satu user berdasarkan ID path parameter.
 ---
 
 #### `PUT /user/:username`
+
 Memperbarui profil user sendiri. Semua field pada body bersifat opsional.
 
 **Request Body Contoh:**
+
 ```json
 {
   "username": "john_new",
   "password": "NewPassword123",
   "full_name": "John Doe Updated",
   "address": "Jl. Baru No. 10",
-  "coordinate_lat": -6.2100,
-  "coordinate_long": 106.8300
+  "CoordinateLat": -6.21,
+  "CoordinateLong": 106.83
 }
 ```
 
 **Response `200`:**
+
 ```json
 {
   "status": 200,
@@ -333,8 +350,8 @@ Memperbarui profil user sendiri. Semua field pada body bersifat opsional.
     "username": "john_new",
     "full_name": "John Doe Updated",
     "address": "Jl. Baru No. 10",
-    "coordinate_lat": -6.2100,
-    "coordinate_long": 106.8300
+    "CoordinateLat": -6.21,
+    "CoordinateLong": 106.83
   }
 }
 ```
@@ -342,9 +359,11 @@ Memperbarui profil user sendiri. Semua field pada body bersifat opsional.
 ---
 
 #### `GET /nearby`
+
 Menampilkan user lain yang berada dalam radius 500 meter dari posisi yang tersimpan di profile.
 
 **Response `200`:**
+
 ```json
 {
   "status": 200,
@@ -355,8 +374,8 @@ Menampilkan user lain yang berada dalam radius 500 meter dari posisi yang tersim
       "username": "budi_santoso",
       "full_name": "Budi Santoso",
       "address": "Jl. Melati No. 5",
-      "coordinate_lat": -6.2100,
-      "coordinate_long": 106.8300,
+      "CoordinateLat": -6.21,
+      "CoordinateLong": 106.83,
       "distance": 123.45
     },
     {
@@ -364,9 +383,9 @@ Menampilkan user lain yang berada dalam radius 500 meter dari posisi yang tersim
       "username": "siti_rahayu",
       "full_name": "Siti Rahayu",
       "address": "Jl. Kenanga No. 2",
-      "coordinate_lat": -6.2110,
-      "coordinate_long": 106.8350,
-      "distance": 387.20
+      "CoordinateLat": -6.211,
+      "CoordinateLong": 106.835,
+      "distance": 387.2
     }
   ]
 }
@@ -377,9 +396,11 @@ Menampilkan user lain yang berada dalam radius 500 meter dari posisi yang tersim
 ---
 
 #### `POST /help`
+
 Meminta bantuan baru. `category` wajib bernilai `urgent` atau `normal`.
 
 **Request Body:**
+
 ```json
 {
   "title": "Butuh obat",
@@ -389,6 +410,7 @@ Meminta bantuan baru. `category` wajib bernilai `urgent` atau `normal`.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "status": 200,
@@ -409,9 +431,11 @@ Meminta bantuan baru. `category` wajib bernilai `urgent` atau `normal`.
 ---
 
 #### `GET /help/nearby`
+
 Menampilkan request dari user lain yang berada dalam radius 500 meter serta jarak dan waktu dibuat.
 
 **Response `200`:**
+
 ```json
 {
   "status": 200,
@@ -437,9 +461,11 @@ Menampilkan request dari user lain yang berada dalam radius 500 meter serta jara
 ---
 
 #### `GET /help`
+
 Menampilkan semua help request (semua user).
 
 **Response `200`:**
+
 ```json
 {
   "status": 200,
@@ -461,9 +487,11 @@ Menampilkan semua help request (semua user).
 ---
 
 #### `PUT /help/:id`
+
 Memperbarui help request yang dibuat sendiri (status hanya `pending`/`resolved`, category hanya `urgent`/`normal`).
 
 **Request Body Contoh:**
+
 ```json
 {
   "title": "Butuh obat dan susu",
@@ -473,6 +501,7 @@ Memperbarui help request yang dibuat sendiri (status hanya `pending`/`resolved`,
 ```
 
 **Response `200`:**
+
 ```json
 {
   "message": "Help request updated successfully",
@@ -483,9 +512,11 @@ Memperbarui help request yang dibuat sendiri (status hanya `pending`/`resolved`,
 ---
 
 #### `GET /help/:id/messages`
+
 Mengambil history pesan untuk help request tertentu. Status harus `pending` agar bisa chat.
 
 **Response `200`:**
+
 ```json
 {
   "status": 200,
@@ -506,9 +537,11 @@ Mengambil history pesan untuk help request tertentu. Status harus `pending` agar
 ---
 
 #### `GET /my-help`
+
 Menampilkan semua help request yang dibuat oleh user saat ini.
 
 **Response `200`:**
+
 ```json
 {
   "status": 200,
@@ -530,7 +563,8 @@ Menampilkan semua help request yang dibuat oleh user saat ini.
 ---
 
 #### `GET /ws/help/:id/chat`
-WebSocket untuk chat satu help request (token harus disertakan sebagai query string). 
+
+WebSocket untuk chat satu help request (token harus disertakan sebagai query string).
 
 1. Ambil JWT dari `/login`.
 2. Sambungkan ke `ws://localhost:8080/ws/help/{id}/chat?token=<jwt>`.
@@ -550,15 +584,15 @@ Error responses mengikuti format:
 }
 ```
 
-| Status Code | Keterangan |
-|---|---|
-| `400` | Bad Request — input tidak valid |
-| `401` | Unauthorized — token tidak ada atau tidak valid |
-| `403` | Forbidden — tidak punya akses |
-| `404` | Not Found — data tidak ditemukan |
-| `409` | Conflict — data duplikat (misal username sudah dipakai) |
-| `429` | Too Many Requests — rate limit tercapai |
-| `500` | Internal Server Error |
+| Status Code | Keterangan                                              |
+| ----------- | ------------------------------------------------------- |
+| `400`       | Bad Request — input tidak valid                         |
+| `401`       | Unauthorized — token tidak ada atau tidak valid         |
+| `403`       | Forbidden — tidak punya akses                           |
+| `404`       | Not Found — data tidak ditemukan                        |
+| `409`       | Conflict — data duplikat (misal username sudah dipakai) |
+| `429`       | Too Many Requests — rate limit tercapai                 |
+| `500`       | Internal Server Error                                   |
 
 ---
 
@@ -573,18 +607,18 @@ Request → Handler → Service → Repository → Database
                interface)  interface)
 ```
 
-| Layer | Folder | Tanggung Jawab |
-|---|---|---|
-| Handler | `handler/` | Menerima HTTP request, validasi input, return response |
-| Service | `service/` | Business logic, orchestrasi antar repository |
-| Repository | `repository/` | Akses langsung ke database |
-| Contract | `contract/` | Interface untuk decoupling antar layer |
+| Layer      | Folder        | Tanggung Jawab                                         |
+| ---------- | ------------- | ------------------------------------------------------ |
+| Handler    | `handler/`    | Menerima HTTP request, validasi input, return response |
+| Service    | `service/`    | Business logic, orchestrasi antar repository           |
+| Repository | `repository/` | Akses langsung ke database                             |
+| Contract   | `contract/`   | Interface untuk decoupling antar layer                 |
 
 ---
 
 Rate Limiting
 
-| Environment | Limit |
-|---|---|
+| Environment | Limit                |
+| ----------- | -------------------- |
 | Development | 1000 request / menit |
-| Production | 100 request / menit |
+| Production  | 100 request / menit  |

@@ -62,7 +62,7 @@ func (s *chatService) ValidateChatAccess(userID uint, requestID uint) (*dto.Chat
 		return nil, errs.NotFound("Help request not found")
 	}
 
-	if helpRequest.Status == models.Resolved {
+	if helpRequest.Status == "resolved" {
 		return nil, errs.Forbidden("This help request is already resolved")
 	}
 
@@ -79,8 +79,8 @@ func (s *chatService) ValidateChatAccess(userID uint, requestID uint) (*dto.Chat
 		}
 
 		dist := haversineMeters(
-			currentUser.Coordinate_lat, currentUser.Coordinate_long,
-			requester.Coordinate_lat, requester.Coordinate_long,
+			currentUser.CoordinateLat, currentUser.CoordinateLong,
+			requester.CoordinateLat, requester.CoordinateLong,
 		)
 		if dist > 500 {
 			return nil, errs.Forbidden("You are not within proximity")

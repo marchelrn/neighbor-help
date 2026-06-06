@@ -7,7 +7,6 @@ import (
 	"neighbor_help/contract"
 	"neighbor_help/handler"
 	"neighbor_help/middleware"
-	"neighbor_help/pkg/hub"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -17,77 +16,121 @@ import (
 )
 
 func SetupRoutes(s *contract.Service) *gin.Engine {
+
 	r := gin.Default()
 	r.RedirectTrailingSlash = false
 
 	cfg := config.GetConfig()
 
-	var limitter int64
+	// =====================================
+	// RATE LIMITER
+	// =====================================
+
+	var limiterCount int64
+
 	if cfg.Env != "production" {
-		limitter = 1000
+		limiterCount = 1000
 	} else {
-		limitter = 100
+		limiterCount = 100
 	}
 
 	rate := limiter.Rate{
 		Period: 1 * time.Minute,
-		Limit:  limitter,
+		Limit:  limiterCount,
 	}
 
 	store := memory.NewStore()
 	instance := limiter.New(store, rate)
-	rateLimitter := mgin.NewMiddleware(instance)
-	r.Use(rateLimitter)
 
-	defaultConfig := cors.DefaultConfig()
-	defaultConfig.AllowAllOrigins = true
-	// defaultConfig.AllowOrigins = []string{"http://localhost:3000", "http://localhost:5500"}
-	defaultConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"}
-	defaultConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Accept", "X-Requested-With"}
-	defaultConfig.AllowCredentials = true
-	defaultConfig.ExposeHeaders = []string{"Content-Length"}
-	r.Use(cors.New(defaultConfig))
+	r.Use(mgin.NewMiddleware(instance))
 
-	healthController := &handler.HealthController{}
-	healthController.InitService(s)
+	// =====================================
+	// CORS
+	// =====================================
 
-	userController := &handler.UserController{}
-	userController.InitService(s)
+	corsConfig := cors.DefaultConfig()
 
-	helpRequestController := &handler.HelpRequestController{}
-	helpRequestController.InitService(s)
+	corsConfig.AllowAllOrigins = true
 
-	chatController := &handler.ChatController{}
-	chatController.Hub = hub.NewHub()
-	chatController.InitService(s)
+	corsConfig.AllowMethods = []string{
+		"GET",
+		"POST",
+		"PUT",
+		"DELETE",
+		"PATCH",
+		"OPTIONS",
+	}
+
+	corsConfig.AllowHeaders = []string{
+		"Origin",
+		"Content-Type",
+		"Authorization",
+		"Accept",
+		"X-Requested-With",
+	}
+
+	corsConfig.AllowCredentials = true
+
+	r.Use(cors.New(corsConfig))
+
+	// =====================================
+	// HANDLERS
+	// =====================================
+
+	helpRequestHandler := handler.NewHelpRequestHandler(
+		s.HelpRequest,
+	)
+
+	// =====================================
+	// PUBLIC ROUTES
+	// =====================================
 
 	api := r.Group("/")
+
 	{
-		api.GET("/health", healthController.GetStatus)
-		api.POST("/register", userController.Register)
-		api.POST("/login", userController.Login)
-		api.GET("/users", userController.GetUsers)
+		api.GET("/health", func(c *gin.Context) {
+			c.JSON(200, gin.H{
+				"status":  200,
+				"message": "Server is running",
+			})
+		})
 	}
+
+	// =====================================
+	// AUTH ROUTES
+	// =====================================
 
 	auth := r.Group("/")
 	auth.Use(middleware.AuthMiddleware())
+
 	{
-		// User Chatting
-		api.GET("/ws/help/:id/chat", chatController.JoinChat)
+		// =========================
+		// HELP REQUEST
+		// =========================
 
-		// User
-		// auth.GET("/users", userController.GetUsers)
-		auth.GET("/user/:id", userController.GetUserByID)
-		auth.PUT("/user/:username", userController.UpdateUser)
-		auth.GET("/nearby", userController.GetNearbyUsers)
+		auth.POST(
+			"/help",
+			helpRequestHandler.CreateHelpRequest,
+		)
 
-		// Help Request
-		auth.POST("/help", helpRequestController.CreateHelpRequest)
-		auth.GET("/help/nearby", helpRequestController.GetNearbyHelpRequests)
-		auth.GET("/help", helpRequestController.GetAllHelpRequests)
-		auth.PUT("/help/:id", helpRequestController.UpdateHelpRequest)
-		auth.GET("/help/:id/messages", chatController.GetMessages)
-		auth.GET("/my-help", helpRequestController.GetHelpRequestByUserID)
+		auth.GET(
+			"/help",
+			helpRequestHandler.GetAllHelpRequests,
+		)
+
+		auth.GET(
+			"/help/nearby",
+			helpRequestHandler.GetNearbyHelpRequests,
+		)
 	}
+
+	// =====================================
+	// DEBUG ROUTES
+	// =====================================
+
+	for _, route := range r.Routes() {
+		println(route.Method, route.Path)
+	}
+
 	return r
 }

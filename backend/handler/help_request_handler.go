@@ -1,143 +1,326 @@
 package handler
 
 import (
-	"fmt"
-	"neighbor_help/contract"
-	"neighbor_help/dto"
-	errs "neighbor_help/pkg/error"
 	"net/http"
 	"strconv"
 
+	"neighbor_help/contract"
+	"neighbor_help/dto"
+
 	"github.com/gin-gonic/gin"
 )
-
-type HelpRequestController struct {
-	HelpRequestService contract.HelpRequestService
+type HelpRequestHandler struct {
+	Service contract.HelpRequestService
 }
 
-func (c *HelpRequestController) InitService(s *contract.Service) {
-	fmt.Println("DEBUG: Initializing HelpRequestController with HelpRequestService")
-	if s == nil {
-		fmt.Println("ERROR: Service is nil")
-		return
-	}
+func NewHelpRequestHandler(
+	service contract.HelpRequestService,
+) *HelpRequestHandler {
 
-	if s.User == nil {
-		fmt.Println("ERROR: UserService is nil")
-		return
+	return &HelpRequestHandler{
+		Service: service,
 	}
-	c.HelpRequestService = s.HelpRequest
-
-	fmt.Println("DEBUG: HelpRequestController initialized successfully with HelpRequestService")
 }
 
-func (h *HelpRequestController) CreateHelpRequest(c *gin.Context) {
-	userIDGet, exists := c.Get("UserID")
-	if !exists {
-		HandleError(c, errs.Unauthorized("Unauthorized"))
-		return
-	}
-	var helpRequest dto.HelpRequest
-	if err := c.ShouldBindJSON(&helpRequest); err != nil {
-		HandleError(c, err)
-		return
-	}
-	response, err := h.HelpRequestService.CreateHelpRequest(userIDGet.(uint), &helpRequest)
-	if err != nil {
-		HandleError(c, err)
+// =========================
+// CREATE HELP REQUEST
+// =========================
+
+func (h *HelpRequestHandler) CreateHelpRequest(
+	c *gin.Context,
+) {
+
+	var req dto.CreateHelpRequestRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": 400,
+			"message": err.Error(),
+		})
+
 		return
 	}
 
-	c.JSON(response.Status, gin.H{
-		"status":  response.Status,
-		"message": response.Message,
-	})
-}
-
-func (h *HelpRequestController) UpdateHelpRequest(c *gin.Context) {
-	userID, exists := c.Get("UserID")
-	if !exists {
-		HandleError(c, errs.Unauthorized("Unauthorized"))
-		return
+	payload := &dto.HelpRequest{
+		Title:       req.Title,
+		Description: req.Description,
+		Category:    req.Category,
+		Latitude:    req.Latitude,
+		Longitude:   req.Longitude,
 	}
 
-	helpRequestIDParam := c.Param("id")
-	helpRequestID, err := strconv.Atoi(helpRequestIDParam)
-	if err != nil || helpRequestID <= 0 {
-		HandleError(c, errs.BadRequest("Invalid help request ID"))
-		return
-	}
+	userID := c.GetUint("user_id")
 
-	var payload dto.UpdateHelpRequest
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		HandleError(c, errs.BadRequest("Invalid Request Body"))
-		return
-	}
-
-	response, err := h.HelpRequestService.UpdateHelpRequest(
-		userID.(uint),
-		uint(helpRequestID),
-		&payload,
+	response, err := h.Service.CreateHelpRequest(
+		userID,
+		payload,
 	)
+
 	if err != nil {
-		HandleError(c, err)
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": 400,
+			"message": err.Error(),
+		})
+
 		return
 	}
-	c.JSON(response.Status, gin.H{
-		"status":        response.Status,
-		"message":       response.Message,
-	})
+
+	c.JSON(http.StatusCreated, response)
 }
 
-func (h *HelpRequestController) GetNearbyHelpRequests(c *gin.Context) {
-	username, exists := c.Get("Username")
-	if !exists {
-		HandleError(c, errs.Unauthorized("Unauthorized"))
-		return
-	}
+// =========================
+// GET ALL HELP REQUESTS
+// =========================
 
-	response, err := h.HelpRequestService.GetNearbyHelpRequests(username.(string))
+func (h *HelpRequestHandler) GetAllHelpRequests(
+	c *gin.Context,
+) {
+
+	helpRequests, err :=
+		h.Service.GetAllHelpRequests()
+
 	if err != nil {
-		HandleError(c, err)
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": 500,
+			"message": err.Error(),
+		})
+
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":       response.Message,
-		"help_requests": response.HelpRequests,
+		"status": 200,
+		"help_requests": helpRequests,
 	})
 }
 
-func (h *HelpRequestController) GetAllHelpRequests(c *gin.Context) {
-	response, err := h.HelpRequestService.GetAllHelpRequests()
-	if err != nil {
-		HandleError(c, err)
+// =========================
+// GET NEARBY HELP REQUESTS
+// =========================
+
+func (h *HelpRequestHandler) GetNearbyHelpRequests(
+	c *gin.Context,
+) {
+
+	var req dto.GetNearbyHelpRequestsRequest
+
+	if err := c.ShouldBindQuery(&req); err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": 400,
+			"message": err.Error(),
+		})
+
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{
-		"status":        response.Status,
-		"message":       response.Message,
-		"help_requests": response.HelpRequests,
+	userID := c.GetUint("user_id")
+
+	helpRequests, err := h.Service.GetNearbyHelpRequests(
+		req.Latitude,
+		req.Longitude,
+		userID,
+		req.RadiusMeters,
+	)
+
+	if err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": 500,
+			"message": err.Error(),
+		})
+
+		return
+	}
+
+	
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": 200,
+		"help_requests": helpRequests,
 	})
 }
 
-func (h *HelpRequestController) GetHelpRequestByUserID(c *gin.Context) {
-	userID, exists := c.Get("UserID")
-	if !exists {
-		HandleError(c, errs.Unauthorized("Unauthorized"))
+// =========================
+// GET HELP REQUEST BY ID
+// =========================
+
+func (h *HelpRequestHandler) GetHelpRequestByID(
+	c *gin.Context,
+) {
+
+	id, err := strconv.Atoi(
+		c.Param("id"),
+	)
+
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": 400,
+			"message": "invalid id",
+		})
+
 		return
 	}
 
-	response, err := h.HelpRequestService.GetHelpRequestByUserID(userID.(uint))
+	helpRequest, err :=
+		h.Service.GetHelpRequestByID(
+			uint(id),
+		)
+
 	if err != nil {
-		HandleError(c, err)
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"status": 404,
+			"message": err.Error(),
+		})
+
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"status":        response.Status,
-		"message":       response.Message,
-		"help_requests": response.HelpRequests,
+		"status": 200,
+		"help_request": helpRequest,
+	})
+}
+
+// =========================
+// GET MY HELP REQUESTS
+// =========================
+
+func (h *HelpRequestHandler) GetHelpRequestByUserID(
+	c *gin.Context,
+) {
+
+	userID := c.GetUint("user_id")
+
+	helpRequests, err :=
+		h.Service.GetHelpRequestByUserID(
+			userID,
+		)
+
+	if err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": 500,
+			"message": err.Error(),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": 200,
+		"help_requests": helpRequests,
+	})
+}
+
+// =========================
+// DELETE HELP REQUEST
+// =========================
+
+func (h *HelpRequestHandler) DeleteHelpRequest(
+	c *gin.Context,
+) {
+
+	id, err := strconv.Atoi(
+		c.Param("id"),
+	)
+
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": 400,
+			"message": "invalid id",
+		})
+
+		return
+	}
+
+	userID := c.GetUint("user_id")
+
+	err = h.Service.DeleteHelpRequest(
+		userID,
+		uint(id),
+	)
+
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": 400,
+			"message": err.Error(),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": 200,
+		"message": "Help request deleted successfully",
+	})
+
+
+	
+	
+}
+
+// =========================
+// UPDATE HELP REQUEST
+// =========================
+
+func (h *HelpRequestHandler) UpdateHelpRequest(
+	c *gin.Context,
+) {
+
+	id, err := strconv.Atoi(
+		c.Param("id"),
+	)
+
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": 400,
+			"message": "invalid id",
+		})
+
+		return
+	}
+
+	var req dto.UpdateHelpRequestRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": 400,
+			"message": err.Error(),
+		})
+
+		return
+	}
+
+	userID := c.GetUint("user_id")
+
+	err = h.Service.UpdateHelpRequest(
+		userID,
+		uint(id),
+		&req,
+	)
+
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": 400,
+			"message": err.Error(),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": 200,
+		"message": "Help request updated successfully",
 	})
 }

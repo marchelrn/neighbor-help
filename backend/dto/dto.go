@@ -2,33 +2,39 @@ package dto
 
 import "time"
 
-// Users
+// =========================
+// USERS
+// =========================
+
 type UsersRequest struct {
 	ID              uint    `json:"id"`
 	Username        string  `json:"username"`
+	Email           string  `json:"email"`
 	Password        string  `json:"password"`
 	FullName        string  `json:"full_name"`
 	Address         string  `json:"address"`
-	Coordinate_lat  float64 `json:"coordinate_lat"`
-	Coordinate_long float64 `json:"coordinate_long"`
+	CoordinateLat  float64 `json:"CoordinateLat"`
+	CoordinateLong float64 `json:"CoordinateLong"`
 }
 
 type UpdateUserRequest struct {
 	Username        *string  `json:"username"`
+	Email           *string  `json:"email"`
 	Password        *string  `json:"password"`
 	FullName        *string  `json:"full_name"`
 	Address         *string  `json:"address"`
-	Coordinate_lat  *float64 `json:"coordinate_lat"`
-	Coordinate_long *float64 `json:"coordinate_long"`
+	CoordinateLat  *float64 `json:"CoordinateLat"`
+	CoordinateLong *float64 `json:"CoordinateLong"`
 }
 
 type UsersData struct {
 	ID              uint    `json:"id"`
 	Username        string  `json:"username"`
+	Email           string  `json:"email"`
 	FullName        string  `json:"full_name"`
 	Address         string  `json:"address"`
-	Coordinate_lat  float64 `json:"coordinate_lat"`
-	Coordinate_long float64 `json:"coordinate_long"`
+	CoordinateLat  float64 `json:"CoordinateLat"`
+	CoordinateLong float64 `json:"CoordinateLong"`
 }
 
 type UsersResponse struct {
@@ -43,26 +49,19 @@ type AllUsersResponse struct {
 	Data    []UsersData `json:"users"`
 }
 
-// Login
-type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
 
-type LoginResponse struct {
-	Status  int    `json:"status"`
-	Message string `json:"message"`
-	Token   string `json:"token"`
-}
 
-// Nearby Users
+// =========================
+// NEARBY USERS
+// =========================
+
 type NearbyUserData struct {
 	ID              uint    `json:"id"`
 	Username        string  `json:"username"`
 	FullName        string  `json:"full_name"`
 	Address         string  `json:"address"`
-	Coordinate_lat  float64 `json:"coordinate_lat"`
-	Coordinate_long float64 `json:"coordinate_long"`
+	CoordinateLat  float64 `json:"CoordinateLat"`
+	CoordinateLong float64 `json:"CoordinateLong"`
 	Distance        float64 `json:"distance"`
 }
 
@@ -72,16 +71,20 @@ type NearbyUsersResponse struct {
 	Users   []NearbyUserData `json:"users"`
 }
 
-// Help Request
-type HelpRequest struct {
-	ID          uint   `json:"id"`
-	UserID      uint   `json:"user_id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Category    string `json:"category"`
-	Status      string `json:"status"`
-}
+// =========================
+// HELP REQUESTS
+// =========================
 
+type HelpRequest struct {
+	ID          uint    `json:"id"`
+	UserID      uint    `json:"user_id"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	Category    string  `json:"category"`
+	Status      string  `json:"status"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
+}
 type UpdateHelpRequest struct {
 	Title       *string `json:"title"`
 	Description *string `json:"description"`
@@ -123,7 +126,9 @@ type NearbyHelpRequestResponse struct {
 	HelpRequests []NearbyHelpRequestData `json:"help_requests"`
 }
 
-// Messages / chat
+// =========================
+// MESSAGES / CHAT
+// =========================
 
 type MessageData struct {
 	ID         uint      `json:"id"`
@@ -163,7 +168,9 @@ type ChatAccessResult struct {
 	CurrentUsername string `json:"current_username"`
 }
 
-// Basic Response 
+// =========================
+// BASIC RESPONSE
+// =========================
 
 type BasicResponse struct {
 	Status  int    `json:"status"`

@@ -2,6 +2,7 @@ package contract
 
 import (
 	"neighbor_help/dto"
+	"neighbor_help/models"
 )
 
 type Service struct {
@@ -25,12 +26,52 @@ type UsersService interface {
 }
 
 type HelpRequestService interface {
-	CreateHelpRequest(userID uint, payload *dto.HelpRequest) (*dto.HelpRequestResponse, error)
-	GetAllHelpRequests() (*dto.HelpRequestResponse, error)
-	GetNearbyHelpRequests(username string) (*dto.NearbyHelpRequestResponse, error)
-	GetHelpRequestByID(helpRequestID uint) (*dto.HelpRequestResponse, error)
-	GetHelpRequestByUserID(userID uint) (*dto.HelpRequestResponse, error)
-	UpdateHelpRequest(userID uint, helpRequestID uint, payload *dto.UpdateHelpRequest) (*dto.BasicResponse, error)
+	CreateHelpRequest(
+		userID uint,
+		payload *dto.HelpRequest,
+	) (
+		*dto.HelpRequestResponse,
+		error,
+	)
+
+	GetAllHelpRequests() (
+		[]*models.HelpRequest,
+		error,
+	)
+
+	GetNearbyHelpRequests(
+		lat, lon float64,
+		excludeUserID uint,
+		radiusMeters float64,
+	) (
+		[]*models.NearbyHelpRequest,
+		error,
+	)
+
+	GetHelpRequestByID(
+		helpRequestID uint,
+	) (
+		*models.HelpRequest,
+		error,
+	)
+
+	GetHelpRequestByUserID(
+		userID uint,
+	) (
+		[]*models.HelpRequest,
+		error,
+	)
+
+	UpdateHelpRequest(
+	userID uint,
+	helpRequestID uint,
+	payload *dto.UpdateHelpRequestRequest,
+) error
+
+	DeleteHelpRequest(
+	userID uint,
+	helpRequestID uint,
+) error
 }
 
 type ChatService interface {
@@ -38,3 +79,4 @@ type ChatService interface {
 	SaveMessage(payload *dto.CreateMessageRequest) (*dto.SavedMessage, error)
 	ValidateChatAccess(userID uint, requestID uint) (*dto.ChatAccessResult, error)
 }
+

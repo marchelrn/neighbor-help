@@ -27,8 +27,8 @@ func (m CreateUsersTable) Up(conn *sql.Tx) error {
 		password VARCHAR(255) NOT NULL,
 		full_name VARCHAR(255) NOT NULL,
 		address VARCHAR(255) NOT NULL,
-		coordinate_lat DECIMAL(10, 8) NOT NULL,
-		coordinate_long DECIMAL(11, 8) NOT NULL
+		CoordinateLat DECIMAL(10, 8) NOT NULL,
+		CoordinateLong DECIMAL(11, 8) NOT NULL
 	)
 	`)
 	log.Println("Creating up migrations : CreateUsersTable")

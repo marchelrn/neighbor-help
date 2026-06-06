@@ -2,43 +2,37 @@ package models
 
 import "time"
 
-type Category string
-
-const (
-	Urgent Category = "urgent"
-	Normal Category = "normal"
-)
-
-type Status string
-
-const (
-	Pending  Status = "pending"
-	Resolved Status = "resolved"
-)
-
 type HelpRequest struct {
-	ID          uint     `gorm:"primaryKey;autoIncrement"`
-	Username    string   `gorm:"tupe:varchar(25);column:username"`
-	UserID      uint     `gorm:"not null"`
-	Title       string   `gorm:"type:varchar(255);not null"`
-	Description string   `gorm:"type:varchar(255);not null"`
-	Category    Category `gorm:"type:varchar(255);not null;default:'normal'"`
-	Status      Status   `gorm:"type:varchar(255);not null;default:'pending'"`
-	CreatedAt   time.Time
-}
+	ID uint `gorm:"primaryKey" json:"id"`
 
-func (HelpRequest) TableName() string {
-	return "help_requests"
+	UserID uint `gorm:"not null" json:"user_id"`
+
+	Title string `gorm:"type:text;not null" json:"title"`
+
+	Description string `gorm:"type:text;not null" json:"description"`
+
+	Category string `gorm:"type:varchar(50);not null" json:"category"`
+
+	Status string `gorm:"type:varchar(50);default:'pending'" json:"status"`
+
+	Latitude float64 `gorm:"type:decimal(10,8);not null" json:"latitude"`
+
+	Longitude float64 `gorm:"type:decimal(11,8);not null" json:"longitude"`
+
+	CreatedAt time.Time `json:"created_at"`
+
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type NearbyHelpRequest struct {
-	ID          uint      `gorm:"column:id"`
-	UserID      int       `gorm:"column:user_id"`
-	Username    string    `gorm:"column:username"`
-	Title       string    `gorm:"column:title"`
-	Description string    `gorm:"column:description"`
-	Category    Category  `gorm:"column:category"`
-	Status      Status    `gorm:"column:status"`
-	CreatedAt   time.Time `gorm:"column:created_at"`
-	Distance    float64   `gorm:"column:distance"`
+	ID          uint    `json:"id"`
+	UserID      uint    `json:"user_id"`
+	Username    string  `json:"username"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	Category    string  `json:"category"`
+	Status      string  `json:"status"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
+	Distance    float64 `json:"distance"`
 }

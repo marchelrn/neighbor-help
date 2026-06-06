@@ -1,98 +1,167 @@
 package repository
 
 import (
-	"neighbor_help/contract"
 	"neighbor_help/models"
 
 	"gorm.io/gorm"
 )
 
-func ImplHelpRequestRepository(db *gorm.DB) contract.HelpRequestRepository {
-	return &helpRequestRepository{db: db}
+type HelpRequestRepository struct {
+	DB *gorm.DB
 }
 
-type helpRequestRepository struct {
-	db *gorm.DB
-}
+func NewHelpRequestRepository(
+	db *gorm.DB,
+) *HelpRequestRepository {
 
-func (r *helpRequestRepository) CreateHelpRequest(payload *models.HelpRequest) error {
-	if err := r.db.Create(payload).Error; err != nil {
-		return err
+	return &HelpRequestRepository{
+		DB: db,
 	}
-	return nil
 }
 
-func (r *helpRequestRepository) GetAllHelpRequests() ([]*models.HelpRequest, error) {
+func (r *HelpRequestRepository) CreateHelpRequest(
+	payload *models.HelpRequest,
+) error {
+
+	return r.DB.Create(payload).Error
+}
+
+func (r *HelpRequestRepository) GetAllHelpRequests() (
+	[]*models.HelpRequest,
+	error,
+) {
+
 	var helpRequests []*models.HelpRequest
-	if err := r.db.Find(&helpRequests).Error; err != nil {
+
+	err := r.DB.
+		Order("created_at DESC").
+		Find(&helpRequests).Error
+
+	if err != nil {
 		return nil, err
 	}
+
 	return helpRequests, nil
 }
 
-func (r *helpRequestRepository) GetHelpRequestByUserID(id uint) ([]*models.HelpRequest, error) {
-	var helpRequests []*models.HelpRequest
+func (r *HelpRequestRepository) GetHelpRequestByID(
+	id uint,
+) (
+	*models.HelpRequest,
+	error,
+) {
 
-	if err := r.db.
-		Table("help_requests").
-		Select("help_requests.*, users.username AS username").
-		Joins("JOIN users ON users.id = help_requests.user_id").
-		Where("help_requests.user_id = ?", id).
-		Find(&helpRequests).Error; err != nil {
-		return nil, err
-	}
-	return helpRequests, nil
-}
-
-func (r *helpRequestRepository) GetHelpRequestByID(id uint) (*models.HelpRequest, error) {
 	var helpRequest models.HelpRequest
-	if err := r.db.First(&helpRequest, id).Error; err != nil {
+
+	err := r.DB.
+		Where("id = ?", id).
+		First(&helpRequest).Error
+
+	if err != nil {
 		return nil, err
 	}
+
 	return &helpRequest, nil
 }
 
-func (r *helpRequestRepository) UpdateHelpRequest(payload *models.HelpRequest) error {
-	return r.db.Save(payload).Error
-}
+func (r *HelpRequestRepository) GetHelpRequestByUserID(
+	id uint,
+) (
+	[]*models.HelpRequest,
+	error,
+) {
 
-func (r *helpRequestRepository) GetNearbyHelpRequests(lat, lon float64, excludeUserID uint, radiusMeters float64) ([]*models.NearbyHelpRequest, error) {
-	var helpRequests []*models.NearbyHelpRequest
+	var helpRequests []*models.HelpRequest
 
-	subQuery := r.db.
-		Table("users u").
-		Select(`
-			u.id AS user_id,
-			u.username,
-			(6371000 * acos(
-				LEAST(1.0,
-					cos(radians(?)) * cos(radians(u.coordinate_lat)) *
-					cos(radians(u.coordinate_long) - radians(?)) +
-					sin(radians(?)) * sin(radians(u.coordinate_lat))
-				)
-			)) AS distance
-		`, lat, lon, lat).
-		Where("u.id != ?", excludeUserID)
+	err := r.DB.
+		Where("user_id = ?", id).
+		Order("created_at DESC").
+		Find(&helpRequests).Error
 
-	if err := r.db.
-		Table("help_requests hr").
-		Select(`
-			hr.id,
-			hr.user_id,
-			hr.title,
-			sub.username,
-			hr.description,
-			hr.category,
-			hr.status,
-			hr.created_at,
-			sub.distance
-		`).
-		Joins("JOIN (?) sub ON hr.user_id = sub.user_id", subQuery).
-		Where("sub.distance < ?", radiusMeters).
-		Order("sub.distance ASC").
-		Order("hr.created_at DESC").
-		Scan(&helpRequests).Error; err != nil {
+	if err != nil {
 		return nil, err
 	}
+
 	return helpRequests, nil
 }
+
+func (r *HelpRequestRepository) UpdateHelpRequest(
+	payload *models.HelpRequest,
+) error {
+
+	return r.DB.Save(payload).Error
+}
+
+func (r *HelpRequestRepository) GetNearbyHelpRequests(
+	lat, lon float64,
+	excludeUserID uint,
+	radiusMeters float64,
+) (
+	[]*models.NearbyHelpRequest,
+	error,
+) {
+
+	var helpRequests []*models.NearbyHelpRequest
+
+	query := `
+	SELECT *
+	FROM (
+		SELECT
+			help_requests.id,
+			help_requests.user_id,
+			users.username,
+			help_requests.title,
+			help_requests.description,
+			help_requests.category,
+			help_requests.status,
+			help_requests.latitude,
+			help_requests.longitude,
+
+			(
+				6371000 * acos(
+					cos(radians(?)) *
+					cos(radians(help_requests.latitude)) *
+					cos(radians(help_requests.longitude) - radians(?)) +
+					sin(radians(?)) *
+					sin(radians(help_requests.latitude))
+				)
+			) AS distance
+
+		FROM help_requests
+
+		JOIN users
+			ON users.id = help_requests.user_id
+
+		WHERE help_requests.user_id != ?
+	) AS nearby_requests
+
+	WHERE distance <= ?
+
+	ORDER BY distance ASC
+`
+
+	err := r.DB.Raw(
+		query,
+		lat,
+		lon,
+		lat,
+		excludeUserID,
+		radiusMeters,
+	).Scan(&helpRequests).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return helpRequests, nil
+}
+
+func (r *HelpRequestRepository) DeleteHelpRequest(
+	id uint,
+) error {
+
+	return r.DB.
+		Delete(&models.HelpRequest{}, id).
+		Error
+}
+

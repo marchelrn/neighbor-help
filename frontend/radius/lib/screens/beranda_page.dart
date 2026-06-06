@@ -1,130 +1,362 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import '../theme/app_colors.dart';
 import 'request_detail_page.dart';
+import '../utils/storage.dart';
 
-class BerandaPage extends StatelessWidget {
+class BerandaPage extends StatefulWidget {
   const BerandaPage({super.key});
+
+  @override
+  State<BerandaPage> createState() => _BerandaPageState();
+}
+
+class _BerandaPageState extends State<BerandaPage> {
+  Map<String, dynamic>? user;
+
+  // nearby users
+  List<dynamic> requests = [];
+
+  bool isLoading = true;
+
+  int activeRequests = 0;
+  int completedHelp = 0;
+  double rating = 4.8;
+
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
+
+  //
+  // =====================================
+  // REPLACE loadData() WITH THIS
+  // =====================================
+  //
+
+  Future<void> loadData() async {
+    try {
+      // =====================================
+      // TOKEN
+      // =====================================
+
+      final token = await StorageService.getToken();
+
+      if (token == null) {
+        throw Exception("Token not found");
+      }
+      // =====================================
+      // CURRENT USER
+      // =====================================
+
+      final userRes = await http.get(
+        Uri.parse("http://localhost:8080/api/user/me"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      debugPrint("USER STATUS: ${userRes.statusCode}");
+      debugPrint("USER BODY: ${userRes.body}");
+
+      if (userRes.statusCode != 200) {
+        throw Exception("Failed to load current user");
+      }
+
+      final decodedUser = jsonDecode(userRes.body);
+
+      final userData = decodedUser["data"] ?? decodedUser;
+
+      // =====================================
+      // NEARBY USERS
+      // =====================================
+
+      List<dynamic> nearbyData = [];
+
+      final nearbyRes = await http.get(
+        Uri.parse("http://localhost:8080/api/user/nearby"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      debugPrint("NEARBY STATUS: ${nearbyRes.statusCode}");
+      debugPrint("NEARBY BODY: ${nearbyRes.body}");
+
+      if (nearbyRes.statusCode == 200) {
+        final decodedNearby = jsonDecode(nearbyRes.body);
+
+        nearbyData = decodedNearby["data"] ?? decodedNearby;
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Gagal mengambil data tetangga")),
+          );
+        }
+      }
+
+      setState(() {
+        user = userData;
+
+        requests = nearbyData;
+
+        activeRequests = nearbyData.length;
+
+        // temporary stats
+        completedHelp = nearbyData.length * 2;
+
+        rating = 4.8;
+
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("LOAD DATA ERROR:");
+      debugPrint(e.toString());
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan: $e")));
+      }
+
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   String getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return "Selamat pagi";
-    if (hour < 17) return "Selamat siang";
+
+    if (hour < 12) {
+      return "Selamat pagi";
+    }
+
+    if (hour < 17) {
+      return "Selamat siang";
+    }
+
     return "Selamat malam";
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Container(
+        color: AppColors.background,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Container(
-      color: AppColors.background,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 🔥 HEADER
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "${getGreeting()}, Budi 👋",
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFF7F9F8), Color(0xFFEAF4EE)],
+        ),
+      ),
+      child: RefreshIndicator(
+        onRefresh: loadData,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // =====================================
+              // HEADER
+              // =====================================
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primary.withOpacity(0.75),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 25,
+                      offset: const Offset(0, 10),
+                      color: AppColors.primary.withOpacity(0.25),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.5),
+                          width: 2,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      child: const CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.person,
+                          size: 32,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 18),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${getGreeting()}, ${user?["full_name"] ?? "User"} 👋",
+                            style: const TextStyle(
+                              fontSize: 25,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          Text(
+                            user?["address"] ?? "Siap bantu tetangga hari ini?",
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.92),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // =====================================
+              // STATS
+              // =====================================
+              Row(
+                children: [
+                  Expanded(
+                    child: AnimatedStatCard(
+                      title: "Tetangga",
+                      value: activeRequests.toDouble(),
+                      icon: Icons.people_alt_rounded,
+                    ),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  Expanded(
+                    child: AnimatedStatCard(
+                      title: "Interaksi",
+                      value: completedHelp.toDouble(),
+                      icon: Icons.handshake_rounded,
+                    ),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  Expanded(
+                    child: AnimatedStatCard(
+                      title: "Rating",
+                      value: rating,
+                      icon: Icons.star_rounded,
+                      isDecimal: true,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 28),
+
+              // =====================================
+              // INSIGHT
+              // =====================================
+              const _InsightSection(),
+
+              const SizedBox(height: 28),
+
+              // =====================================
+              // URGENT
+              // =====================================
+              const Text(
+                "Tetangga Terdekat 🔥",
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+              ),
+
+              const SizedBox(height: 14),
+
+              if (requests.isNotEmpty) _UrgentCard(request: requests.first),
+
+              const SizedBox(height: 28),
+
+              // =====================================
+              // REQUEST LIST
+              // =====================================
+              const Text(
+                "Tetangga Sekitar",
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+              ),
+
+              const SizedBox(height: 14),
+
+              if (requests.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(35),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                        color: Colors.black.withOpacity(0.03),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.location_off_rounded,
+                        size: 65,
+                        color: Colors.grey.shade400,
+                      ),
+
+                      const SizedBox(height: 14),
+
                       Text(
-                        "Siap bantu tetangga hari ini?",
-                        style: TextStyle(color: Colors.grey.shade600),
+                        "Belum ada tetangga terdekat ditemukan",
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 15,
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
 
-            const SizedBox(height: 24),
-
-            // 🔥 STATS
-            Row(
-              children: const [
-                Expanded(
-                  child: AnimatedStatCard(
-                    title: "Request Aktif",
-                    value: 5,
-                    icon: Icons.assignment,
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: AnimatedStatCard(
-                    title: "Bantuan Selesai",
-                    value: 23,
-                    icon: Icons.check,
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: AnimatedStatCard(
-                    title: "Rating",
-                    value: 4.8,
-                    icon: Icons.star,
-                    isDecimal: true,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            const _InsightSection(),
-
-            const SizedBox(height: 24),
-
-            // 🔥 URGENT
-            const Text(
-              "Butuh Bantuan Mendesak 🔥",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            const _UrgentCard(),
-
-            const SizedBox(height: 24),
-
-            // 🔥 REQUEST LIST
-            const Text(
-              "Request Terdekat",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-
-            Column(
-              children: const [
-                RequestCard(
-                  name: "Andi",
-                  title: "Butuh bantuan angkat galon ke lantai 2",
-                  distance: "120m",
-                  urgent: true,
-                  time: "2 menit lalu",
-                ),
-                RequestCard(
-                  name: "Siti",
-                  title: "Pinjam tangga sebentar untuk betulin atap",
-                  distance: "300m",
-                  time: "10 menit lalu",
-                ),
-                RequestCard(
-                  name: "Rudi",
-                  title: "Butuh orang bantu pasang lampu ruang tamu",
-                  distance: "500m",
-                  time: "25 menit lalu",
-                ),
-              ],
-            ),
-          ],
+              Column(
+                children: requests.map((req) {
+                  return RequestCard(
+                    name: req["full_name"] ?? "Unknown",
+                    title: req["address"] ?? "Tidak ada alamat",
+                    distance: "${(req["distance"] ?? 0).toStringAsFixed(1)} km",
+                    urgent: (req["distance"] ?? 0) < 0.2,
+                    time: "Tetangga sekitar",
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -132,8 +364,11 @@ class BerandaPage extends StatelessWidget {
 }
 
 //
-// 🔥 ANIMATED STAT CARD
+// =====================================
+// ANIMATED STAT CARD
+// =====================================
 //
+
 class AnimatedStatCard extends StatefulWidget {
   final String title;
   final double value;
@@ -163,13 +398,13 @@ class _AnimatedStatCardState extends State<AnimatedStatCard>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 900),
     );
 
     _animation = Tween<double>(
       begin: 0,
       end: widget.value,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutExpo));
 
     _controller.forward();
   }
@@ -186,42 +421,55 @@ class _AnimatedStatCardState extends State<AnimatedStatCard>
               : _animation.value.toInt().toString();
 
           return Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.primary.withOpacity(0.12),
-                  AppColors.primary.withOpacity(0.05),
-                ],
-              ),
-              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+              borderRadius: BorderRadius.circular(24),
+              color: Colors.white.withOpacity(0.8),
+              border: Border.all(color: AppColors.primary.withOpacity(0.08)),
               boxShadow: [
                 BoxShadow(
-                  blurRadius: 14,
-                  color: AppColors.primary.withOpacity(0.15),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                  color: Colors.black.withOpacity(0.04),
                 ),
               ],
             ),
             child: Row(
               children: [
-                Icon(widget.icon, color: AppColors.primary),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      displayValue,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      widget.title,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(widget.icon, color: AppColors.primary),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayValue,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 4),
+
+                      Text(
+                        widget.title,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -239,25 +487,35 @@ class _AnimatedStatCardState extends State<AnimatedStatCard>
 }
 
 //
-// 🔥 INSIGHT
+// =====================================
+// INSIGHT SECTION
+// =====================================
 //
+
 class _InsightSection extends StatelessWidget {
   const _InsightSection();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        color: Colors.white.withOpacity(0.8),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.03),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: const [
-          _InlineInsight("1", "Minggu ini"),
-          _InlineInsight("+80%", "Performa"),
-          _InlineInsight("Top 20%", "Ranking"),
+          _InlineInsight("Aktif", "Komunitas"),
+          _InlineInsight("+80%", "Respons"),
+          _InlineInsight("Top Area", "Lingkungan"),
         ],
       ),
     );
@@ -276,8 +534,11 @@ class _InlineInsight extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
         ),
+
+        const SizedBox(height: 5),
+
         Text(
           label,
           style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
@@ -288,56 +549,84 @@ class _InlineInsight extends StatelessWidget {
 }
 
 //
-// 🔥 URGENT CARD (INTERACTIVE)
+// =====================================
+// URGENT CARD
+// =====================================
 //
+
 class _UrgentCard extends StatelessWidget {
-  const _UrgentCard();
+  final dynamic request;
+
+  const _UrgentCard({required this.request});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.shade200),
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          colors: [Colors.red.shade400, Colors.red.shade300],
+        ),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            color: Colors.red.withOpacity(0.2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning, color: Colors.red),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              "Ibu Lina butuh bantuan sekarang (50m)",
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const RequestDetailPage(
-                    name: "Ibu Lina",
-                    title: "Butuh bantuan sekarang",
-                    distance: "50m",
-                    urgent: true,
+          const Icon(Icons.location_on, color: Colors.white, size: 32),
+
+          const SizedBox(width: 14),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  request["full_name"] ?? "Unknown",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text("Bantu"),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  request["address"] ?? "-",
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.white.withOpacity(0.92)),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          Text(
+            "${(request["distance"] ?? 0).toStringAsFixed(1)} km",
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
     );
   }
 }
+//
+// =====================================
+// REQUEST CARD
+// =====================================
+//
 
-//
-// 🔥 REQUEST CARD (FULLY INTERACTIVE)
-//
 class RequestCard extends StatelessWidget {
   final String name;
   final String title;
@@ -354,115 +643,87 @@ class RequestCard extends StatelessWidget {
     this.time = "Baru saja",
   });
 
-  void _openDetail(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => RequestDetailPage(
-          name: name,
-          title: title,
-          distance: distance,
-          urgent: urgent,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final Color accent = urgent ? Colors.red : AppColors.primary;
 
-    return GestureDetector(
-      onTap: () => _openDetail(context),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: [Colors.white, accent.withOpacity(0.05)],
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: Colors.white.withOpacity(0.8),
+        border: Border.all(color: accent.withOpacity(0.15)),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.04),
           ),
-          border: Border.all(color: accent.withOpacity(0.15)),
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-              color: Colors.black.withOpacity(0.04),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        ],
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: accent.withOpacity(0.1),
+            child: Icon(Icons.person, color: accent),
+          ),
+
+          const SizedBox(width: 14),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CircleAvatar(
-                  radius: 18,
-                  child: Icon(Icons.person, size: 18),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        time,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+
+                const SizedBox(height: 4),
+
                 Text(
-                  distance,
-                  style: TextStyle(color: accent, fontWeight: FontWeight.bold),
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                ),
+
+                const SizedBox(height: 6),
+
+                Text(
+                  time,
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                if (urgent)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      "URGENT",
-                      style: TextStyle(color: Colors.white, fontSize: 10),
-                    ),
+          ),
+
+          const SizedBox(width: 12),
+
+          Column(
+            children: [
+              Text(
+                distance,
+                style: TextStyle(color: accent, fontWeight: FontWeight.bold),
+              ),
+
+              if (urgent)
+                Container(
+                  margin: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () => _openDetail(context),
-                  child: Text(
-                    "Lihat Detail →",
-                    style: TextStyle(
-                      color: accent,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    "DEKAT",
+                    style: TextStyle(color: Colors.white, fontSize: 10),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

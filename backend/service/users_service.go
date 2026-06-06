@@ -25,16 +25,15 @@ func implUsersService(repo contract.UsersRepository) *UsersService {
 }
 
 func (u *UsersService) Register(payload *dto.UsersRequest) (*dto.UsersResponse, error) {
-	err := utils.ValidateStruct(payload)
-	if err != nil {
-		return nil, errs.BadRequest("Invalid request payload")
+	if payload.Email == "" || payload.Password == "" || payload.FullName == "" || payload.Address == "" {
+		return nil, errs.BadRequest("Username, password, full name, and address are required")
 	}
 
-	if payload.Coordinate_lat == 0 || payload.Coordinate_long == 0 {
+	if payload.CoordinateLat == 0 || payload.CoordinateLong == 0 {
 		return nil, errs.BadRequest("Coordinate latitude and longitude are required")
 	}
 
-	if !utils.IsValidUsername(payload.Username) {
+	if !utils.IsValidUsername(payload.Email) {
 		return nil, errs.BadRequest("Invalid username")
 	}
 
@@ -42,7 +41,7 @@ func (u *UsersService) Register(payload *dto.UsersRequest) (*dto.UsersResponse, 
 		return nil, errs.BadRequest("Invalid password")
 	}
 
-	usernameExists, err := u.UserRepository.GetUserByUsername(payload.Username)
+	usernameExists, err := u.UserRepository.GetUserByUsername(payload.Email)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, errs.InternalServerError("Failed to get user by username")
 	}
@@ -55,12 +54,12 @@ func (u *UsersService) Register(payload *dto.UsersRequest) (*dto.UsersResponse, 
 	}
 
 	userModel := &models.Users{
-		Username:        payload.Username,
+		Username:        payload.Email,
 		Password:        string(hashedPassword),
 		FullName:        payload.FullName,
 		Address:         payload.Address,
-		Coordinate_lat:  payload.Coordinate_lat,
-		Coordinate_long: payload.Coordinate_long,
+		CoordinateLat:  payload.CoordinateLat,
+		CoordinateLong: payload.CoordinateLong,
 	}
 
 	err = u.UserRepository.CreateUser(userModel)
@@ -76,20 +75,15 @@ func (u *UsersService) Register(payload *dto.UsersRequest) (*dto.UsersResponse, 
 			Username:        userModel.Username,
 			FullName:        userModel.FullName,
 			Address:         userModel.Address,
-			Coordinate_lat:  userModel.Coordinate_lat,
-			Coordinate_long: userModel.Coordinate_long,
+			CoordinateLat:  userModel.CoordinateLat,
+			CoordinateLong: userModel.CoordinateLong,
 		},
 	}
 	return response, nil
 }
 
 func (u *UsersService) Login(payload *dto.LoginRequest) (*dto.LoginResponse, error) {
-	err := utils.ValidateStruct(payload)
-	if err != nil {
-		return nil, errs.BadRequest("Invalid request payload")
-	}
-
-	user, err := u.UserRepository.GetUserByUsername(payload.Username)
+	user, err := u.UserRepository.GetUserByUsername(payload.Email)
 	if err != nil {
 		return nil, errs.NotFound("User Not Found, Please register first")
 	}
@@ -122,16 +116,16 @@ func (u *UsersService) UpdateUser(username string, usernameParam string, payload
 	if err != nil {
 		return nil, errs.NotFound("User Not Found")
 	}
-	if payload.Username != nil {
-		if !utils.IsValidUsername(*payload.Username) {
+	if payload.Email != nil {
+		if !utils.IsValidUsername(*payload.Email) {
 			return nil, errs.BadRequest("Invalid Username")
 		}
 
-		usrExists, err := u.UserRepository.GetUserByUsername(*payload.Username)
+		usrExists, err := u.UserRepository.GetUserByUsername(*payload.Email)
 		if err == nil && usrExists.Username != username {
 			return nil, errs.Conflict("Username already taken")
 		}
-		user.Username = *payload.Username
+		user.Username = *payload.Email
 	}
 
 	if username != usernameParam {
@@ -157,11 +151,11 @@ func (u *UsersService) UpdateUser(username string, usernameParam string, payload
 		user.Address = *payload.Address
 	}
 
-	if payload.Coordinate_lat != nil {
-		user.Coordinate_lat = *payload.Coordinate_lat
+	if payload.CoordinateLat != nil {
+		user.CoordinateLat = *payload.CoordinateLat
 	}
-	if payload.Coordinate_long != nil {
-		user.Coordinate_long = *payload.Coordinate_long
+	if payload.CoordinateLong != nil {
+		user.CoordinateLong = *payload.CoordinateLong
 	}
 
 	err = u.UserRepository.UpdateUser(username, user)
@@ -177,8 +171,8 @@ func (u *UsersService) UpdateUser(username string, usernameParam string, payload
 			Username:        user.Username,
 			FullName:        user.FullName,
 			Address:         user.Address,
-			Coordinate_lat:  user.Coordinate_lat,
-			Coordinate_long: user.Coordinate_long,
+			CoordinateLat:  user.CoordinateLat,
+			CoordinateLong: user.CoordinateLong,
 		},
 	}
 	return response, nil
@@ -204,8 +198,8 @@ func (u *UsersService) GetUsers() (*dto.AllUsersResponse, error) {
 			Username:        user.Username,
 			FullName:        user.FullName,
 			Address:         user.Address,
-			Coordinate_lat:  user.Coordinate_lat,
-			Coordinate_long: user.Coordinate_long,
+			CoordinateLat:  user.CoordinateLat,
+			CoordinateLong: user.CoordinateLong,
 		})
 	}
 	return response, nil
@@ -228,8 +222,8 @@ func (u *UsersService) GetUserByID(id uint) (*dto.UsersResponse, error) {
 			Username:        user.Username,
 			FullName:        user.FullName,
 			Address:         user.Address,
-			Coordinate_lat:  user.Coordinate_lat,
-			Coordinate_long: user.Coordinate_long,
+			CoordinateLat:  user.CoordinateLat,
+			CoordinateLong: user.CoordinateLong,
 		},
 	}
 	return response, nil
@@ -244,8 +238,8 @@ func (u *UsersService) GetNearbyUsers(username string) (*dto.NearbyUsersResponse
 	const radius = 500
 
 	nearbyUsers, err := u.UserRepository.GetNearbyUsers(
-		currentUsers.Coordinate_lat,
-		currentUsers.Coordinate_long,
+		currentUsers.CoordinateLat,
+		currentUsers.CoordinateLong,
 		radius,
 		currentUsers.ID,
 	)
@@ -265,8 +259,8 @@ func (u *UsersService) GetNearbyUsers(username string) (*dto.NearbyUsersResponse
 			Username:        user.Username,
 			FullName:        user.FullName,
 			Address:         user.Address,
-			Coordinate_lat:  user.Coordinate_lat,
-			Coordinate_long: user.Coordinate_long,
+			CoordinateLat:  user.CoordinateLat,
+			CoordinateLong: user.CoordinateLong,
 			Distance:        utils.DecimalFormat(user.Distance),
 		})
 	}

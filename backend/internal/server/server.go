@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"neighbor_help/config"
+	"neighbor_help/contract"
 	"neighbor_help/internal/database"
 	"neighbor_help/migrations"
 	"neighbor_help/repository"
@@ -22,13 +23,22 @@ func Run() {
 
 	db, sqlDB := database.ConnectDB()
 
-	repo := repository.New(db)
-	srv, err := service.New(repo)
+	repositories := &contract.Repository{
+		HelpRequestRepository: repository.NewHelpRequestRepository(db),
+
+		// Add these back once their repositories exist:
+		// HealthRepository:       repository.NewHealthRepository(),
+		// UsersRepository:        repository.NewUsersRepository(db),
+		// MessagesRepository:     repository.NewMessagesRepository(db),
+		// NotificationRepository: repository.NewNotificationRepository(db),
+	}
+
+	services, err := service.New(repositories)
 	if err != nil {
 		log.Fatalf("Failed to initialize services: %v", err)
 	}
 
-	r := routes.SetupRoutes(srv)
+	r := routes.SetupRoutes(services)
 
 	migrations.Up(sqlDB)
 
@@ -38,5 +48,8 @@ func Run() {
 	}
 
 	log.Printf("Server is running on port %s\n", cfg.Port)
-	log.Fatal(serv.ListenAndServe())
+
+	if err := serv.ListenAndServe(); err != nil {
+		log.Fatal(err)
+	}
 }
