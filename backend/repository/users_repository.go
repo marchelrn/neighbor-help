@@ -61,6 +61,13 @@ func (r *UsersRepository) UpdateUser(username string, payload *models.Users) err
 	return nil
 }
 
+func (r *UsersRepository) DeleteUser(id uint) error {
+	if err := r.db.Delete(&models.Users{}, id).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *UsersRepository) GetNearbyUsers(lat, lon float64, radius float64, excludeID uint) ([]*models.NearbyUser, error) {
 	var users []*models.NearbyUser
 	query := `

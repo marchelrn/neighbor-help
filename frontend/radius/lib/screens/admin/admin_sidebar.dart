@@ -67,7 +67,7 @@ class AdminSidebar extends StatelessWidget {
           // ── Divider ──
           Container(
             height: 1,
-            color: Colors.white.withOpacity(0.06),
+            color: Colors.white.withValues(alpha: 0.06),
             margin: const EdgeInsets.symmetric(horizontal: 16),
           ),
           const SizedBox(height: 10),
@@ -104,7 +104,7 @@ class AdminSidebar extends StatelessWidget {
             margin: const EdgeInsets.all(10),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(

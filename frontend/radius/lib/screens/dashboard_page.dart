@@ -173,7 +173,18 @@ class RequestCard extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ChatPage(receiverName: name),
+                          builder: (_) => Scaffold(
+                            appBar: AppBar(
+                              title: Text("Chat dengan $name"),
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              elevation: 1,
+                            ),
+                            body: ChatPage(
+                              receiverName: name,
+                              isActive: true, // Assuming active for simple recent chats
+                            ),
+                          ),
                         ),
                       );
                     },

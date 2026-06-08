@@ -58,16 +58,21 @@ func (s *HelpRequestService) CreateHelpRequest(userID uint, payload *dto.HelpReq
         return nil, err
     }
 
-    err = s.NotificationRepository.CreateNotification(&models.Notifications{
-        HelpRequestID: &helpRequest.ID,
-        UserID:        &helpRequest.UserID,
-        Title:         fmt.Sprintf("New help request: %s", helpRequest.Title),
-        Username:      username,
-        IsRead:        false,
-        Created_at:    time.Now(),
-    })
-    if err != nil {
-        return nil, err
+    // Notify nearby users (radius 10km for example)
+    creator, errCreator := s.UsersRepository.GetUserByID(userID)
+    if errCreator == nil {
+        nearbyUsers, _ := s.UsersRepository.GetNearbyUsers(creator.Coordinate_lat, creator.Coordinate_long, 10000, userID)
+        for _, u := range nearbyUsers {
+            uid := u.ID
+            _ = s.NotificationRepository.CreateNotification(&models.Notifications{
+                HelpRequestID: &helpRequest.ID,
+                UserID:        &uid, // Penerima notifikasi
+                Title:         fmt.Sprintf("Request baru: %s", helpRequest.Title),
+                Username:      username, // Pengirim request
+                IsRead:        false,
+                Created_at:    time.Now(),
+            })
+        }
     }
 
     response := []dto.HelpRequestData{{
@@ -78,6 +83,7 @@ func (s *HelpRequestService) CreateHelpRequest(userID uint, payload *dto.HelpReq
         Description: helpRequest.Description,
         Category:    string(helpRequest.Category),
         Status:      string(helpRequest.Status),
+        CreatedAt:   helpRequest.CreatedAt,
     }}
 
     return &dto.HelpRequestResponse{
@@ -107,6 +113,7 @@ func (s *HelpRequestService) GetAllHelpRequests() (*dto.HelpRequestResponse, err
 			Description: helpRequest.Description,
 			Category:    string(helpRequest.Category),
 			Status:      string(helpRequest.Status),
+			CreatedAt:   helpRequest.CreatedAt,
 		})
 	}
 
@@ -148,6 +155,8 @@ func (s *HelpRequestService) GetNearbyHelpRequests(username string) (*dto.Nearby
 			Status:      string(hr.Status),
 			CreatedAt:   hr.CreatedAt,
 			Distance:    utils.DecimalFormat(hr.Distance),
+			Latitude:    hr.Latitude,
+			Longitude:   hr.Longitude,
 		})
 	}
 
@@ -220,6 +229,7 @@ func (s *HelpRequestService) GetHelpRequestByID(id uint) (*dto.HelpRequestRespon
 				Description: helpReq.Description,
 				Category:    string(helpReq.Category),
 				Status:      string(helpReq.Status),
+				CreatedAt:   helpReq.CreatedAt,
 			},
 		},
 	}, nil
@@ -245,6 +255,7 @@ func (s *HelpRequestService) GetHelpRequestByUserID(userID uint) (*dto.HelpReque
 			Description: hr.Description,
 			Category:    string(hr.Category),
 			Status:      string(hr.Status),
+			CreatedAt:   hr.CreatedAt,
 		})
 	}
 	return response, nil

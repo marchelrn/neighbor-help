@@ -156,7 +156,7 @@ class _AdminModerationPageState extends State<AdminModerationPage> {
                         ),
                         decoration: BoxDecoration(
                           color: isActive
-                              ? Colors.white.withOpacity(0.2)
+                              ? Colors.white.withValues(alpha: 0.2)
                               : AdminColors.borderLight,
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -245,14 +245,14 @@ class _AdminModerationPageState extends State<AdminModerationPage> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isPending
-              ? AdminColors.error.withOpacity(0.3)
+              ? AdminColors.error.withValues(alpha: 0.3)
               : AdminColors.border,
         ),
         boxShadow: [
           BoxShadow(
             blurRadius: 6,
             offset: const Offset(0, 1),
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
           ),
         ],
       ),

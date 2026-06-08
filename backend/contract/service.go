@@ -5,10 +5,11 @@ import (
 )
 
 type Service struct {
-	Health      HealthService
-	User        UsersService
-	HelpRequest HelpRequestService
-	Chat        ChatService
+	Health       HealthService
+	User         UsersService
+	HelpRequest  HelpRequestService
+	Chat         ChatService
+	Notification NotificationService
 }
 
 type HealthService interface {
@@ -22,6 +23,7 @@ type UsersService interface {
 	Register(payload *dto.UsersRequest) (*dto.UsersResponse, error)
 	Login(payload *dto.LoginRequest) (*dto.LoginResponse, error)
 	UpdateUser(username string, usernameParam string, payload *dto.UpdateUserRequest) (*dto.UsersResponse, error)
+	DeleteUser(id uint) (*dto.BasicResponse, error)
 }
 
 type HelpRequestService interface {
@@ -37,4 +39,10 @@ type ChatService interface {
 	GetMessages(requestID uint) (*dto.MessageResponse, error)
 	SaveMessage(payload *dto.CreateMessageRequest) (*dto.SavedMessage, error)
 	ValidateChatAccess(userID uint, requestID uint) (*dto.ChatAccessResult, error)
+}
+
+type NotificationService interface {
+	GetNotificationsByUserID(userID uint) (*dto.NotificationResponse, error)
+	GetUnreadCountByUserID(userID uint) (*dto.UnreadCountResponse, error)
+	MarkAsReadByUserID(userID uint) (*dto.BasicResponse, error)
 }

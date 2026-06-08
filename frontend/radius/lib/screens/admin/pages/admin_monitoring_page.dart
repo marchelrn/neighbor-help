@@ -246,7 +246,7 @@ class AdminMonitoringPage extends StatelessWidget {
           BoxShadow(
             blurRadius: 8,
             offset: const Offset(0, 2),
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
           ),
         ],
       ),
@@ -319,7 +319,7 @@ class AdminMonitoringPage extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 15, color: color),

@@ -94,6 +94,26 @@ func (u *UserController) UpdateUser(c *gin.Context) {
 	})
 }
 
+func (u *UserController) DeleteUser(c *gin.Context) {
+	userIdParam := c.Param("id")
+	var userId uint
+	_, err := fmt.Sscanf(userIdParam, "%d", &userId)
+	if err != nil {
+		HandleError(c, errs.BadRequest("Invalid User ID"))
+		return
+	}
+
+	response, err := u.UserService.DeleteUser(userId)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	c.JSON(response.Status, gin.H{
+		"message": response.Message,
+	})
+}
+
 func (u *UserController) GetUsers(c *gin.Context) {
 	users, err := u.UserService.GetUsers()
 	if err != nil {
@@ -111,10 +131,19 @@ func (u *UserController) GetUsers(c *gin.Context) {
 func (u *UserController) GetUserByID(c *gin.Context) {
 	userIdParam := c.Param("id")
 	var userId uint
-	_, err := fmt.Sscanf(userIdParam, "%d", &userId)
-	if err != nil {
-		HandleError(c, errs.BadRequest("Invalid User ID"))
-		return
+	if userIdParam == "me" {
+		userID, exists := c.Get("UserID")
+		if !exists {
+			HandleError(c, errs.Unauthorized("Unauthorized"))
+			return
+		}
+		userId = userID.(uint)
+	} else {
+		_, err := fmt.Sscanf(userIdParam, "%d", &userId)
+		if err != nil {
+			HandleError(c, errs.BadRequest("Invalid User ID"))
+			return
+		}
 	}
 	response, err := u.UserService.GetUserByID(userId)
 	if err != nil {

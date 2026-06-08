@@ -1,11 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import '../services/auth_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/storage.dart';
+import '../widgets/create_request_dialog.dart';
 
 import 'sidebar.dart';
 import 'request_list_page.dart';
@@ -16,7 +14,6 @@ import 'help_feed_page.dart';
 import 'peta_area_page.dart';
 import 'notification_page.dart';
 import 'login_page.dart';
-import 'admin/pages/admin_dashboard_page.dart';
 import 'admin/admin_main_layout.dart';
 
 class MainLayout extends StatefulWidget {
@@ -28,12 +25,16 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   String selectedChat = "Budi Santoso";
+  int? selectedRequestId;
+  bool isChatActive = true;
 
   String activeMenu = "Beranda";
 
   Map<String, dynamic>? currentUser;
 
   bool isLoadingUser = true;
+
+  int unreadNotificationCount = 0;
 
   // =====================================
   // INIT
@@ -58,37 +59,27 @@ class _MainLayoutState extends State<MainLayout> {
         return;
       }
 
-      final response = await http.get(
-        Uri.parse("http://localhost:8080/api/user/me"),
-        headers: {"Authorization": "Bearer $token"},
-      );
+      final data = await AuthService.getCurrentUser(token);
+      final role = data["role"];
 
-      debugPrint("MAIN LAYOUT USER:");
-      debugPrint(response.body);
+      if (role == "admin") {
+        if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final role = data["role"];
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminMainLayout()),
+        );
 
-        if (role == "admin") {
-          if (!mounted) return;
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const AdminMainLayout()),
-          );
-
-          return;
-        }
-        setState(() {
-          currentUser = data;
-          isLoadingUser = false;
-        });
-      } else {
-        setState(() {
-          isLoadingUser = false;
-        });
+        return;
       }
+
+      final count = await AuthService.getUnreadNotificationCount(token);
+
+      setState(() {
+        currentUser = data;
+        unreadNotificationCount = count;
+        isLoadingUser = false;
+      });
     } catch (e) {
       debugPrint(e.toString());
 
@@ -110,8 +101,26 @@ class _MainLayoutState extends State<MainLayout> {
       case "Request Saya":
         return Row(
           children: [
-            const Expanded(flex: 2, child: RequestListPage()),
-            Expanded(flex: 3, child: ChatPage(receiverName: selectedChat)),
+            Expanded(
+              flex: 2,
+              child: RequestListPage(
+                onChatSelected: (String name, bool isActive, int reqId) {
+                  setState(() {
+                    selectedChat = name;
+                    isChatActive = isActive;
+                    selectedRequestId = reqId;
+                  });
+                },
+              ),
+            ),
+            Expanded(
+              flex: 3, 
+              child: ChatPage(
+                receiverName: selectedChat, 
+                isActive: isChatActive,
+                requestId: selectedRequestId,
+              ),
+            ),
           ],
         );
 
@@ -179,9 +188,28 @@ class _MainLayoutState extends State<MainLayout> {
           // =====================================
           Sidebar(
             activeMenu: activeMenu,
+            unreadNotificationCount: unreadNotificationCount,
             onMenuSelected: (menu) {
+              if (menu == "buat_request") {
+                showDialog(
+                  context: context,
+                  builder: (_) => CreateRequestDialog(
+                    onSuccess: () {
+                      // Optional: Pindah ke tab Request Saya jika berhasil dibuat
+                      setState(() {
+                        activeMenu = "Request Saya";
+                      });
+                    },
+                  ),
+                );
+                return;
+              }
+
               setState(() {
                 activeMenu = menu;
+                if (menu == "Notifikasi") {
+                  unreadNotificationCount = 0;
+                }
               });
             },
             onLogout: _handleLogout,
@@ -208,7 +236,7 @@ class _MainLayoutState extends State<MainLayout> {
                       BoxShadow(
                         blurRadius: 10,
                         offset: const Offset(0, 2),
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha: 0.03),
                       ),
                     ],
                   ),
@@ -250,28 +278,6 @@ class _MainLayoutState extends State<MainLayout> {
                             color: AppColors.textLight,
                           ),
                           overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-
-                      // =====================================
-                      // ACTIVE USERS BADGE
-                      // =====================================
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primarySoft,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          "Tetangga aktif sekitar",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.primaryDark,
-                            fontWeight: FontWeight.w600,
-                          ),
                         ),
                       ),
                     ],

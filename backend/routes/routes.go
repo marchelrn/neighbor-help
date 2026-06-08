@@ -61,12 +61,16 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 	chatController.Hub = hub.NewHub()
 	chatController.InitService(s)
 
+	notificationController := &handler.NotificationController{}
+	notificationController.InitService(s)
+
 	api := r.Group("/")
 	{
 		api.GET("/health", healthController.GetStatus)
 		api.POST("/register", userController.Register)
 		api.POST("/login", userController.Login)
 		api.GET("/users", userController.GetUsers)
+		api.DELETE("/user/:id", userController.DeleteUser)
 	}
 
 	auth := r.Group("/")
@@ -88,6 +92,11 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 		auth.PUT("/help/:id", helpRequestController.UpdateHelpRequest)
 		auth.GET("/help/:id/messages", chatController.GetMessages)
 		auth.GET("/my-help", helpRequestController.GetHelpRequestByUserID)
+
+		// Notifications
+		auth.GET("/notifications", notificationController.GetNotifications)
+		auth.GET("/notifications/unread-count", notificationController.GetUnreadCount)
+		auth.PUT("/notifications/read", notificationController.MarkAsRead)
 	}
 	return r
 }

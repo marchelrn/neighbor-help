@@ -11,6 +11,8 @@ type UsersRequest struct {
 	Address         string  `json:"address"`
 	Coordinate_lat  float64 `json:"coordinate_lat"`
 	Coordinate_long float64 `json:"coordinate_long"`
+	Actual_lat      float64 `json:"actual_lat"`
+	Actual_long     float64 `json:"actual_long"`
 }
 
 type UpdateUserRequest struct {
@@ -90,13 +92,14 @@ type UpdateHelpRequest struct {
 }
 
 type HelpRequestData struct {
-	ID          uint   `json:"id"`
-	UserID      uint   `json:"user_id"`
-	Username    string `json:"username"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Category    string `json:"category"`
-	Status      string `json:"status"`
+	ID          uint      `json:"id"`
+	UserID      uint      `json:"user_id"`
+	Username    string    `json:"username"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Category    string    `json:"category"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type HelpRequestResponse struct {
@@ -115,6 +118,8 @@ type NearbyHelpRequestData struct {
 	Status      string    `json:"status"`
 	CreatedAt   time.Time `json:"created_at"`
 	Distance    float64   `json:"distance_m"`
+	Latitude    float64   `json:"latitude"`
+	Longitude   float64   `json:"longitude"`
 }
 
 type NearbyHelpRequestResponse struct {
@@ -127,9 +132,10 @@ type NearbyHelpRequestResponse struct {
 
 type MessageData struct {
 	ID         uint      `json:"id"`
-	RequestID  uint      `json:"request_id"`
-	SenderID   uint      `json:"sender_id"`
-	RecieverID uint      `json:"reciever_id"`
+	RequestID      uint      `json:"request_id"`
+	SenderID       uint      `json:"sender_id"`
+	SenderUsername string    `json:"sender_username"`
+	RecieverID     uint      `json:"reciever_id"`
 	Content    string    `json:"content"`
 	SentAt     time.Time `json:"created_at"`
 }
@@ -163,9 +169,33 @@ type ChatAccessResult struct {
 	CurrentUsername string `json:"current_username"`
 }
 
-// Basic Response 
+// Basic Response
 
 type BasicResponse struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`
+}
+
+// Notification
+
+type NotificationResponse struct {
+	Status        int                `json:"status"`
+	Message       string             `json:"message"`
+	Notifications []NotificationData `json:"notifications"`
+}
+
+type NotificationData struct {
+	ID            uint      `json:"id"`
+	HelpRequestID *uint     `json:"request_id"`
+	UserID        *uint     `json:"user_id"`
+	Title         string    `json:"title"`
+	Username      string    `json:"username"`
+	IsRead        bool      `json:"is_read"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+type UnreadCountResponse struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Count   int64  `json:"count"`
 }

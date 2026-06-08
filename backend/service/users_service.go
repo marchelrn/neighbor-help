@@ -42,6 +42,13 @@ func (u *UsersService) Register(payload *dto.UsersRequest) (*dto.UsersResponse, 
 		return nil, errs.BadRequest("Invalid password")
 	}
 
+	if payload.Actual_lat != 0 && payload.Actual_long != 0 {
+		dist := utils.HaversineMeters(payload.Coordinate_lat, payload.Coordinate_long, payload.Actual_lat, payload.Actual_long)
+		if dist > 10000 {
+			return nil, errs.BadRequest("Lokasi yang dipilih di peta terlalu jauh dari lokasi fisik Anda (maksimal 10km)")
+		}
+	}
+
 	usernameExists, err := u.UserRepository.GetUserByUsername(payload.Username)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, errs.InternalServerError("Failed to get user by username")
@@ -180,6 +187,19 @@ func (u *UsersService) UpdateUser(username string, usernameParam string, payload
 			Coordinate_lat:  user.Coordinate_lat,
 			Coordinate_long: user.Coordinate_long,
 		},
+	}
+	return response, nil
+}
+
+func (u *UsersService) DeleteUser(id uint) (*dto.BasicResponse, error) {
+	err := u.UserRepository.DeleteUser(id)
+	if err != nil {
+		return nil, errs.InternalServerError("Failed to delete User")
+	}
+
+	response := &dto.BasicResponse{
+		Status:  http.StatusOK,
+		Message: "User deleted successfully",
 	}
 	return response, nil
 }

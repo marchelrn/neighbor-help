@@ -1,120 +1,148 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../services/auth_service.dart';
+import '../utils/storage.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  Map<String, dynamic>? currentUser;
+  bool isLoading = true;
+  int totalRequests = 0;
+  int totalResolved = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null) {
+        final results = await Future.wait([
+          AuthService.getCurrentUser(token),
+          AuthService.getMyHelpRequests(token),
+        ]);
+        final user = results[0] as Map<String, dynamic>;
+        final helpRequests = results[1] as List<Map<String, dynamic>>;
+        final resolved = helpRequests
+            .where((r) => r['status'] == 'resolved')
+            .length;
+        setState(() {
+          currentUser = user;
+          totalRequests = helpRequests.length;
+          totalResolved = resolved;
+        });
+      }
+    } catch (e) {
+      debugPrint("Gagal mengambil data user: $e");
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final String fullName = currentUser?["full_name"] ?? "Loading...";
+
     return SafeArea(
       child: Container(
         color: AppColors.background,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              // =========================
-              // 🔥 PROFILE HEADER
-              // =========================
-              Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          blurRadius: 20,
-                          color: AppColors.primary.withOpacity(0.3),
+        child: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    // profile header
+                    Column(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                blurRadius: 20,
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.white,
+                            child: Text(
+                              fullName[0].toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        Text(
+                          fullName,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        const SizedBox(height: 6),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AnimatedProfileStat(
+                            value: totalResolved.toDouble(),
+                            label: "Bantuan",
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AnimatedProfileStat(
+                            value: totalRequests.toDouble(),
+                            label: "Request",
+                          ),
                         ),
                       ],
                     ),
-                    child: const CircleAvatar(
-                      radius: 50,
-                      backgroundImage: NetworkImage(
-                        "https://i.pravatar.cc/150?img=3",
-                      ),
-                    ),
-                  ),
 
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 24),
 
-                  const Text(
-                    "Budi Santoso",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
+                    const SizedBox(height: 24),
 
-                  const SizedBox(height: 6),
+                    const SizedBox(height: 24),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.star, color: Colors.orange, size: 18),
-                      SizedBox(width: 4),
-                      Text("4.8 • Top Helper"),
-                    ],
-                  ),
-                ],
+                    _MenuItem(Icons.edit, "Edit Profil"),
+                    // _MenuItem(Icons.history, "Riwayat Bantuan"),
+                    // _MenuItem(Icons.settings, "Pengaturan"),
+                    // _MenuItem(Icons.logout, "Keluar", isLogout: true),
+                  ],
+                ),
               ),
-
-              const SizedBox(height: 24),
-
-              // =========================
-              // 🔥 ANIMATED STATS
-              // =========================
-              Row(
-                children: const [
-                  Expanded(
-                    child: AnimatedProfileStat(value: 23, label: "Bantuan"),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: AnimatedProfileStat(value: 12, label: "Request"),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: AnimatedProfileStat(
-                      value: 4.8,
-                      label: "Rating",
-                      isDecimal: true,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // =========================
-              // 🔥 LEVEL CARD
-              // =========================
-              const _ReputationCard(),
-
-              const SizedBox(height: 24),
-
-              // =========================
-              // 🔥 INSIGHT CARD
-              // =========================
-              const _ProfileInsight(),
-
-              const SizedBox(height: 24),
-
-              // =========================
-              // 🔥 MENU
-              // =========================
-              _MenuItem(Icons.edit, "Edit Profil"),
-              _MenuItem(Icons.history, "Riwayat Bantuan"),
-              _MenuItem(Icons.settings, "Pengaturan"),
-              _MenuItem(Icons.logout, "Keluar", isLogout: true),
-            ],
-          ),
-        ),
       ),
     );
   }
 }
 
-//
-// 🔥 ANIMATED PROFILE STAT
-//
 class AnimatedProfileStat extends StatefulWidget {
   final double value;
   final String label;
@@ -168,17 +196,14 @@ class _AnimatedProfileStatState extends State<AnimatedProfileStat>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.primary.withOpacity(0.12),
-                  AppColors.primary.withOpacity(0.05),
-                ],
+              color: Colors.grey,
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.2),
               ),
-              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
               boxShadow: [
                 BoxShadow(
                   blurRadius: 16,
-                  color: AppColors.primary.withOpacity(0.15),
+                  color: AppColors.primary.withValues(alpha: 0.15),
                 ),
               ],
             ),
@@ -210,257 +235,12 @@ class _AnimatedProfileStatState extends State<AnimatedProfileStat>
   }
 }
 
-class _ReputationCard extends StatelessWidget {
-  const _ReputationCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-
-        // 🔥 premium gradient
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryDark],
-        ),
-
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-            color: AppColors.primary.withOpacity(0.25),
-          ),
-        ],
-      ),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 🔥 TITLE
-          Row(
-            children: const [
-              Icon(Icons.verified, color: Colors.white),
-              SizedBox(width: 8),
-              Text(
-                "Reputasi Kamu",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          // 🔥 MAIN STATUS
-          const Text(
-            "Top Helper 🔥",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          const Text(
-            "Kamu berada di top 20% pengguna paling aktif di area kamu",
-            style: TextStyle(color: Colors.white70, height: 1.3),
-          ),
-
-          const SizedBox(height: 16),
-
-          // 🔥 METRICS ROW
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              _ReputationMetric(label: "Respons", value: "Cepat"),
-              _ReputationMetric(label: "Rating", value: "4.8"),
-              _ReputationMetric(label: "Kepercayaan", value: "Tinggi"),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-//
-// 🔥 SMALL METRIC
-//
-class _ReputationMetric extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _ReputationMetric({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 11),
-        ),
-      ],
-    );
-  }
-}
-
-//
-// 🔥 PROFILE INSIGHT
-//
-class _ProfileInsight extends StatelessWidget {
-  const _ProfileInsight();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-
-        // 🔥 softer glass effect
-        gradient: LinearGradient(
-          colors: [Colors.white, AppColors.primary.withOpacity(0.05)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-
-        border: Border.all(color: AppColors.primary.withOpacity(0.15)),
-
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            color: Colors.black.withOpacity(0.04),
-          ),
-        ],
-      ),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 🔥 TITLE
-          Row(
-            children: const [
-              Icon(Icons.insights, size: 18, color: AppColors.primary),
-              SizedBox(width: 8),
-              Text(
-                "Performa Kamu",
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
-          // 🔥 MINI STATS (MORE SPACED)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              _MiniInsight(
-                icon: Icons.volunteer_activism,
-                value: "3",
-                label: "Minggu ini",
-              ),
-              _MiniInsight(
-                icon: Icons.schedule,
-                value: "2 jam",
-                label: "Aktif",
-              ),
-              _MiniInsight(
-                icon: Icons.trending_up,
-                value: "+0.2",
-                label: "Rating",
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // 🔥 CLEAN CENTERED BADGE (FIXED)
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, AppColors.primaryDark],
-              ),
-            ),
-            child: const Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.emoji_events, color: Colors.white, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    "Top 20% pengguna",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-//
-// 🔥 MINI INSIGHT ITEM
-//
-class _MiniInsight extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-
-  const _MiniInsight({
-    required this.icon,
-    required this.value,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: AppColors.primary, size: 20),
-        const SizedBox(height: 6),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-        ),
-      ],
-    );
-  }
-}
-
-//
-// 🔥 MENU ITEM
-//
 class _MenuItem extends StatelessWidget {
   final IconData icon;
   final String title;
-  final bool isLogout;
+  // final bool isLogout;
 
-  const _MenuItem(this.icon, this.title, {this.isLogout = false});
+  const _MenuItem(this.icon, this.title);
 
   @override
   Widget build(BuildContext context) {
@@ -469,7 +249,7 @@ class _MenuItem extends StatelessWidget {
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         tileColor: Colors.white,
-        leading: Icon(icon, color: isLogout ? Colors.red : AppColors.primary),
+        leading: Icon(icon, color: AppColors.primary),
         title: Text(title),
         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
         onTap: () {},

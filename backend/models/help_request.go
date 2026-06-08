@@ -41,4 +41,6 @@ type NearbyHelpRequest struct {
 	Status      Status    `gorm:"column:status"`
 	CreatedAt   time.Time `gorm:"column:created_at"`
 	Distance    float64   `gorm:"column:distance"`
+	Latitude    float64   `gorm:"column:latitude"`
+	Longitude   float64   `gorm:"column:longitude"`
 }

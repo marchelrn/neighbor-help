@@ -24,6 +24,7 @@ type UsersRepository interface {
 	GetUsernameByID(id uint) string
 	CreateUser(user *models.Users) error
 	UpdateUser(username string, payload *models.Users) error
+	DeleteUser(id uint) error
 }
 
 type HelpRequestRepository interface {
@@ -42,7 +43,8 @@ type MessagesRepository interface {
 }
 
 type NotificationRepository interface {
-	// GetNotificationsByUserID(userID uint) ([]*models.Notifications, error)
+	GetNotificationsByUserID(userID uint) ([]*models.Notifications, error)
 	CreateNotification(payload *models.Notifications) error
-	// UpdateNotification(payload *models.Notifications) error
+	GetUnreadCountByUserID(userID uint) (int64, error)
+	MarkAsReadByUserID(userID uint) error
 }

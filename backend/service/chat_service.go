@@ -1,7 +1,6 @@
 package service
 
 import (
-	"math"
 	"neighbor_help/contract"
 	"neighbor_help/dto"
 	"neighbor_help/models"
@@ -43,13 +42,19 @@ func (s *chatService) GetMessages(requestID uint) (*dto.MessageResponse, error) 
 	}
 
 	for _, message := range messages {
+		var senderUsername string
+		if user, err := s.usersRepo.GetUserByID(message.SenderID); err == nil {
+			senderUsername = user.Username
+		}
+
 		response.MessageData = append(response.MessageData, dto.MessageData{
-			ID:         message.ID,
-			RequestID:  message.RequestID,
-			SenderID:   message.SenderID,
-			RecieverID: message.ReceiverID,
-			Content:    message.Content,
-			SentAt:     message.Sent_At,
+			ID:             message.ID,
+			RequestID:      message.RequestID,
+			SenderID:       message.SenderID,
+			SenderUsername: senderUsername,
+			RecieverID:     message.ReceiverID,
+			Content:        message.Content,
+			SentAt:         message.Sent_At,
 		})
 	}
 
@@ -78,7 +83,7 @@ func (s *chatService) ValidateChatAccess(userID uint, requestID uint) (*dto.Chat
 			return nil, errs.InternalServerError("Failed to validate requester")
 		}
 
-		dist := haversineMeters(
+			dist := utils.HaversineMeters(
 			currentUser.Coordinate_lat, currentUser.Coordinate_long,
 			requester.Coordinate_lat, requester.Coordinate_long,
 		)
@@ -125,19 +130,4 @@ func (s *chatService) SaveMessage(payload *dto.CreateMessageRequest) (*dto.Saved
 		Content:    msg.Content,
 		SentAt:     msg.Sent_At,
 	}, nil
-}
-
-func haversineMeters(lat1, lon1, lat2, lon2 float64) float64 {
-	const earthRadiusMeters = 6371000
-
-	lat1Rad := lat1 * math.Pi / 180
-	lat2Rad := lat2 * math.Pi / 180
-	latDelta := (lat2 - lat1) * math.Pi / 180
-	lonDelta := (lon2 - lon1) * math.Pi / 180
-
-	a := math.Sin(latDelta/2)*math.Sin(latDelta/2) +
-		math.Cos(lat1Rad)*math.Cos(lat2Rad)*math.Sin(lonDelta/2)*math.Sin(lonDelta/2)
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-
-	return earthRadiusMeters * c
 }

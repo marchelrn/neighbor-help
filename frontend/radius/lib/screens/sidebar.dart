@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
+import '../services/auth_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/storage.dart';
 
@@ -13,11 +11,14 @@ class Sidebar extends StatefulWidget {
 
   final VoidCallback onLogout;
 
+  final int unreadNotificationCount;
+
   const Sidebar({
     super.key,
     required this.onMenuSelected,
     required this.activeMenu,
     required this.onLogout,
+    this.unreadNotificationCount = 0,
   });
 
   @override
@@ -52,18 +53,11 @@ class _SidebarState extends State<Sidebar> {
         return;
       }
 
-      final response = await http.get(
-        Uri.parse("http://localhost:8080/api/user/me"),
-        headers: {"Authorization": "Bearer $token"},
-      );
+      final data = await AuthService.getCurrentUser(token);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        setState(() {
-          currentUser = data;
-        });
-      }
+      setState(() {
+        currentUser = data;
+      });
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -112,7 +106,7 @@ class _SidebarState extends State<Sidebar> {
               BoxShadow(
                 blurRadius: 20,
                 offset: const Offset(4, 0),
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
               ),
             ],
           ),
@@ -127,42 +121,37 @@ class _SidebarState extends State<Sidebar> {
                     ? MainAxisAlignment.center
                     : MainAxisAlignment.start,
                 children: [
-                  Container(
-                    width: isCollapsed ? 46 : 52,
-                    height: isCollapsed ? 46 : 52,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.handshake_rounded,
-                      color: AppColors.primary,
-                      size: 28,
-                    ),
-                  ),
-
                   if (!isCollapsed) ...[
                     const SizedBox(width: 12),
 
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          "NeighborHelp",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            "NeighborHelp",
+                            maxLines: 1,
+                            overflow: TextOverflow.clip,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
 
-                        SizedBox(height: 2),
+                          SizedBox(height: 2),
 
-                        Text(
-                          "Saling Bantu Tetangga",
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
-                        ),
-                      ],
+                          Text(
+                            "Saling Bantu Tetangga",
+                            maxLines: 1,
+                            overflow: TextOverflow.clip,
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ],
@@ -177,9 +166,11 @@ class _SidebarState extends State<Sidebar> {
                 duration: const Duration(milliseconds: 250),
                 padding: EdgeInsets.all(isCollapsed ? 8 : 14),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.12),
+                  color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.white.withOpacity(0.08)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: isCollapsed
@@ -187,7 +178,7 @@ class _SidebarState extends State<Sidebar> {
                       : MainAxisAlignment.start,
                   children: [
                     CircleAvatar(
-                      radius: 20,
+                      radius: 18,
                       backgroundColor: Colors.white,
                       child: Text(
                         getInitials(),
@@ -199,7 +190,7 @@ class _SidebarState extends State<Sidebar> {
                     ),
 
                     if (!isCollapsed) ...[
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
 
                       Expanded(
                         child: Column(
@@ -261,7 +252,7 @@ class _SidebarState extends State<Sidebar> {
 
               const SizedBox(height: 20),
 
-              Divider(color: Colors.white.withOpacity(0.16)),
+              Divider(color: Colors.white.withValues(alpha: 0.16)),
 
               const SizedBox(height: 8),
 
@@ -283,7 +274,9 @@ class _SidebarState extends State<Sidebar> {
                       _menuItem(
                         Icons.notifications_outlined,
                         "Notifikasi",
-                        badge: "2",
+                        badge: widget.unreadNotificationCount > 0 
+                            ? widget.unreadNotificationCount.toString() 
+                            : null,
                       ),
 
                       _menuItem(Icons.person_outline, "Profil"),
@@ -302,10 +295,10 @@ class _SidebarState extends State<Sidebar> {
                   margin: const EdgeInsets.only(top: 6),
                   padding: EdgeInsets.symmetric(
                     vertical: 13,
-                    horizontal: isCollapsed ? 0 : 14,
+                    horizontal: isCollapsed ? 0 : 13,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
@@ -320,13 +313,17 @@ class _SidebarState extends State<Sidebar> {
                       ),
 
                       if (!isCollapsed) ...[
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
 
-                        const Text(
-                          "Keluar",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                        const Flexible(
+                          child: Text(
+                            "Keluar",
+                            maxLines: 1,
+                            overflow: TextOverflow.clip,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
@@ -362,7 +359,7 @@ class _SidebarState extends State<Sidebar> {
                   BoxShadow(
                     blurRadius: 12,
                     offset: const Offset(0, 4),
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                   ),
                 ],
               ),
@@ -397,10 +394,12 @@ class _SidebarState extends State<Sidebar> {
           horizontal: active ? 12 : 0,
         ),
         decoration: BoxDecoration(
-          color: active ? Colors.white.withOpacity(0.16) : Colors.transparent,
+          color: active
+              ? Colors.white.withValues(alpha: 0.16)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
           border: active
-              ? Border.all(color: Colors.white.withOpacity(0.12))
+              ? Border.all(color: Colors.white.withValues(alpha: 0.12))
               : null,
         ),
         child: Row(

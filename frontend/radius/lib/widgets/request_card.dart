@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:radius/theme/app_colors.dart';
 import '../screens/request_detail_page.dart';
 
 class RequestCard extends StatelessWidget {
@@ -13,6 +14,9 @@ class RequestCard extends StatelessWidget {
   final String? time;
   final bool urgent;
   final List<String> tags;
+  final bool isMyRequest;
+  final VoidCallback? onStatusToggle;
+  final VoidCallback? onChat;
 
   const RequestCard({
     super.key,
@@ -24,6 +28,9 @@ class RequestCard extends StatelessWidget {
     this.time,
     this.urgent = false,
     this.tags = const [],
+    this.isMyRequest = false,
+    this.onStatusToggle,
+    this.onChat,
   });
 
   void _openDetail(BuildContext context) {
@@ -34,7 +41,11 @@ class RequestCard extends StatelessWidget {
           name: name ?? "User",
           title: title ?? "Request",
           distance: distance ?? "-",
+          description: description ?? "-",
           urgent: urgent,
+          time: time ?? "-",
+          onChat: onChat,
+          onAmbil: onChat,
         ),
       ),
     );
@@ -42,7 +53,10 @@ class RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = urgent ? Colors.red : const Color(0xFF22C55E);
+    final accent = urgent
+        ? const Color.fromARGB(255, 0, 0, 0)
+        : AppColors.primarySoft;
+    final btnAccent = Colors.white;
 
     return GestureDetector(
       onTap: () => _openDetail(context),
@@ -50,7 +64,7 @@ class RequestCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isActive ? accent.withOpacity(0.08) : Colors.white,
+          color: isActive ? accent.withValues(alpha: 0.08) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isActive ? accent : const Color(0xFFE5E7EB),
@@ -58,7 +72,7 @@ class RequestCard extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -94,7 +108,7 @@ class RequestCard extends StatelessWidget {
                             : "Selesai • ${time ?? "3 hari lalu"}",
                         style: TextStyle(
                           fontSize: 12,
-                          color: isActive ? accent : const Color(0xFF9CA3AF),
+                          color: isActive ? Colors.black : Colors.grey,
                         ),
                       ),
                     ],
@@ -105,7 +119,7 @@ class RequestCard extends StatelessWidget {
                   Text(
                     distance!,
                     style: TextStyle(
-                      color: accent,
+                      color: Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -156,12 +170,12 @@ class RequestCard extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: accent.withOpacity(0.1),
+                      color: accent.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       tag,
-                      style: TextStyle(fontSize: 10, color: accent),
+                      style: TextStyle(fontSize: 10, color: Colors.black),
                     ),
                   );
                 }).toList(),
@@ -181,32 +195,77 @@ class RequestCard extends StatelessWidget {
 
                 const Spacer(),
 
-                if (name != null) ...[
-                  TextButton(
-                    onPressed: () => _openDetail(context),
-                    child: const Text("Detail"),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => _openDetail(context),
-                    style: ElevatedButton.styleFrom(backgroundColor: accent),
-                    child: const Text("Bantu"),
-                  ),
-                ] else ...[
+                if (isMyRequest) ...[
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE5E7EB),
-                        borderRadius: BorderRadius.circular(10),
+                    child: InkWell(
+                      onTap: onStatusToggle,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isActive ? const Color(0xFFE5E7EB) : accent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          isActive ? "Tandai Selesai" : "Tandai Aktif",
+                          style: TextStyle(
+                            color: isActive ? Colors.black : Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                      child: const Text("Tandai Selesai"),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: onChat,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accent,
+                        foregroundColor: btnAccent,
+                      ),
+                      child: const Text("Chat"),
+                    ),
+                  ),
+                ] else if (name != null) ...[
+                  TextButton(
+                    onPressed: () => _openDetail(context),
+                    style: TextButton.styleFrom(foregroundColor: Colors.black),
+                    child: const Text("Detail"),
+                  ),
+                  ElevatedButton(
+                    onPressed: isActive ? () => _openDetail(context) : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isActive ? accent : Colors.grey,
+                      foregroundColor: btnAccent,
+                    ),
+                    child: const Text("Bantu"),
+                  ),
+                ] else ...[
+                  Expanded(
+                    child: InkWell(
+                      onTap: onStatusToggle,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isActive ? const Color(0xFFE5E7EB) : accent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          isActive ? "Tandai Selesai" : "Tandai Aktif",
+                          style: TextStyle(
+                            color: isActive ? Colors.black : Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onChat,
                       style: ElevatedButton.styleFrom(backgroundColor: accent),
                       child: const Text("Lihat Chat"),
                     ),

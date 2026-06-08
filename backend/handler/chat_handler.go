@@ -128,10 +128,11 @@ func (h *ChatController) JoinChat(c *gin.Context) {
 
 		receiverID := access.RequesterID
 		if claims.UserID == access.RequesterID {
-			receiverID = room.GetOtherParticipantID(claims.UserID)
-			if receiverID == 0 {
-				return nil, fmt.Errorf("no nearby user connected to receive the message")
+			otherID := room.GetOtherParticipantID(claims.UserID)
+			if otherID != 0 {
+				receiverID = otherID
 			}
+			// Jika tidak ada partisipan lain, receiverID tetap access.RequesterID (dirinya sendiri) untuk menghindari error Foreign Key.
 		}
 
 		saved, err := h.ChatService.SaveMessage(&dto.CreateMessageRequest{

@@ -22,7 +22,10 @@ class RequestPage extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () {},
-                child: const Text("+ Buat Baru"),
+                child: const Text(
+                  "+ Buat",
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),

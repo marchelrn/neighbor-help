@@ -1,11 +1,11 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
+import '../services/auth_service.dart';
 import '../theme/app_colors.dart';
-import 'request_detail_page.dart';
 import '../utils/storage.dart';
+
+const String baseUrl = AuthService.baseUrl;
 
 class BerandaPage extends StatefulWidget {
   const BerandaPage({super.key});
@@ -15,16 +15,13 @@ class BerandaPage extends StatefulWidget {
 }
 
 class _BerandaPageState extends State<BerandaPage> {
+  List<dynamic> helpRequestsList = [];
   Map<String, dynamic>? user;
-
-  // nearby users
-  List<dynamic> requests = [];
+  List<dynamic> nearbyUsers = [];
 
   bool isLoading = true;
-
   int activeRequests = 0;
   int completedHelp = 0;
-  double rating = 4.8;
 
   @override
   void initState() {
@@ -32,61 +29,58 @@ class _BerandaPageState extends State<BerandaPage> {
     loadData();
   }
 
-  //
-  // =====================================
-  // REPLACE loadData() WITH THIS
-  // =====================================
-  //
-
   Future<void> loadData() async {
     try {
-      // =====================================
-      // TOKEN
-      // =====================================
-
       final token = await StorageService.getToken();
 
       if (token == null) {
         throw Exception("Token not found");
       }
-      // =====================================
-      // CURRENT USER
-      // =====================================
 
       final userRes = await http.get(
-        Uri.parse("http://localhost:8080/api/user/me"),
+        Uri.parse("$baseUrl/user/me"),
         headers: {"Authorization": "Bearer $token"},
       );
-
-      debugPrint("USER STATUS: ${userRes.statusCode}");
-      debugPrint("USER BODY: ${userRes.body}");
 
       if (userRes.statusCode != 200) {
         throw Exception("Failed to load current user");
       }
 
       final decodedUser = jsonDecode(userRes.body);
-
-      final userData = decodedUser["data"] ?? decodedUser;
-
-      // =====================================
-      // NEARBY USERS
-      // =====================================
+      final currentUser = decodedUser is Map && decodedUser["data"] is Map
+          ? Map<String, dynamic>.from(decodedUser["data"])
+          : Map<String, dynamic>.from(decodedUser);
 
       List<dynamic> nearbyData = [];
 
       final nearbyRes = await http.get(
-        Uri.parse("http://localhost:8080/api/user/nearby"),
+        Uri.parse("$baseUrl/nearby"),
         headers: {"Authorization": "Bearer $token"},
       );
-
-      debugPrint("NEARBY STATUS: ${nearbyRes.statusCode}");
-      debugPrint("NEARBY BODY: ${nearbyRes.body}");
 
       if (nearbyRes.statusCode == 200) {
         final decodedNearby = jsonDecode(nearbyRes.body);
 
-        nearbyData = decodedNearby["data"] ?? decodedNearby;
+        if (decodedNearby is List) {
+          nearbyData = decodedNearby;
+        } else if (decodedNearby is Map) {
+          if (decodedNearby.containsKey("data") &&
+              decodedNearby["data"] is List) {
+            nearbyData = decodedNearby["data"];
+          } else if (decodedNearby.containsKey("users") &&
+              decodedNearby["users"] is List) {
+            nearbyData = decodedNearby["users"];
+          } else if (decodedNearby.containsKey("user") &&
+              decodedNearby["user"] is List) {
+            nearbyData = decodedNearby["user"];
+          } else if (decodedNearby.containsKey("users") &&
+              decodedNearby["users"] is Map &&
+              decodedNearby["users"]["data"] is List) {
+            nearbyData = decodedNearby["users"]["data"];
+          } else {
+            nearbyData = [];
+          }
+        }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -95,29 +89,47 @@ class _BerandaPageState extends State<BerandaPage> {
         }
       }
 
+      List<dynamic> fetchedHelpRequests = [];
+
+      final helpRes = await http.get(
+        Uri.parse("$baseUrl/help/nearby"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      if (helpRes.statusCode >= 200 && helpRes.statusCode < 300) {
+        final decodedHelp = jsonDecode(helpRes.body);
+
+        if (decodedHelp is List) {
+          fetchedHelpRequests = decodedHelp;
+        } else if (decodedHelp is Map &&
+            decodedHelp.containsKey("help_requests")) {
+          fetchedHelpRequests = decodedHelp["help_requests"] is List
+              ? decodedHelp["help_requests"]
+              : [];
+        }
+
+        final currentUsername = currentUser["username"];
+        fetchedHelpRequests = fetchedHelpRequests.where((req) {
+          return req["username"] != currentUsername;
+        }).toList();
+      }
+
+      if (!mounted) return;
+
       setState(() {
-        user = userData;
-
-        requests = nearbyData;
-
-        activeRequests = nearbyData.length;
-
-        // temporary stats
+        helpRequestsList = fetchedHelpRequests;
+        user = currentUser;
+        nearbyUsers = nearbyData;
+        activeRequests = fetchedHelpRequests.length;
         completedHelp = nearbyData.length * 2;
-
-        rating = 4.8;
-
         isLoading = false;
       });
     } catch (e) {
-      debugPrint("LOAD DATA ERROR:");
-      debugPrint(e.toString());
+      if (!mounted) return;
 
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan: $e")));
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan: $e")));
 
       setState(() {
         isLoading = false;
@@ -131,12 +143,24 @@ class _BerandaPageState extends State<BerandaPage> {
     if (hour < 12) {
       return "Selamat pagi";
     }
-
     if (hour < 17) {
       return "Selamat siang";
     }
-
     return "Selamat malam";
+  }
+
+  String getTimeAgo(String? isoString) {
+    if (isoString == null) return "Baru saja";
+    try {
+      final dateTime = DateTime.parse(isoString);
+      final diff = DateTime.now().difference(dateTime);
+      if (diff.inDays > 0) return "${diff.inDays} hari lalu";
+      if (diff.inHours > 0) return "${diff.inHours} jam lalu";
+      if (diff.inMinutes > 0) return "${diff.inMinutes} menit lalu";
+      return "Baru saja";
+    } catch (e) {
+      return "Baru saja";
+    }
   }
 
   @override
@@ -147,6 +171,11 @@ class _BerandaPageState extends State<BerandaPage> {
         child: const Center(child: CircularProgressIndicator()),
       );
     }
+
+    final urgentRequests = helpRequestsList
+        .where((r) => r["category"] == "urgent")
+        .toList();
+    final bool hasUrgent = urgentRequests.isNotEmpty;
 
     return Container(
       decoration: const BoxDecoration(
@@ -159,28 +188,25 @@ class _BerandaPageState extends State<BerandaPage> {
       child: RefreshIndicator(
         onRefresh: loadData,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // =====================================
-              // HEADER
-              // =====================================
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(28),
                   gradient: LinearGradient(
                     colors: [
                       AppColors.primary,
-                      AppColors.primary.withOpacity(0.75),
+                      AppColors.primary.withValues(alpha: 0.75),
                     ],
                   ),
                   boxShadow: [
                     BoxShadow(
                       blurRadius: 25,
                       offset: const Offset(0, 10),
-                      color: AppColors.primary.withOpacity(0.25),
+                      color: AppColors.primary.withValues(alpha: 0.25),
                     ),
                   ],
                 ),
@@ -191,7 +217,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           width: 2,
                         ),
                       ),
@@ -205,28 +231,24 @@ class _BerandaPageState extends State<BerandaPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(width: 18),
-
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "${getGreeting()}, ${user?["full_name"] ?? "User"} 👋",
+                            "${getGreeting()}, ${user?["full_name"] ?? user?["username"] ?? "User"} 👋",
                             style: const TextStyle(
                               fontSize: 25,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
-
                           const SizedBox(height: 6),
-
                           Text(
                             user?["address"] ?? "Siap bantu tetangga hari ini?",
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.92),
+                              color: Colors.white.withValues(alpha: 0.92),
                               fontSize: 14,
                             ),
                           ),
@@ -239,102 +261,77 @@ class _BerandaPageState extends State<BerandaPage> {
 
               const SizedBox(height: 28),
 
-              // =====================================
-              // STATS
-              // =====================================
               Row(
                 children: [
                   Expanded(
                     child: AnimatedStatCard(
-                      title: "Tetangga",
+                      title: "Request",
                       value: activeRequests.toDouble(),
+                      icon: Icons.assignment_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: AnimatedStatCard(
+                      title: "Tetangga",
+                      value: nearbyUsers.length.toDouble(),
                       icon: Icons.people_alt_rounded,
                     ),
                   ),
-
                   const SizedBox(width: 16),
-
-                  Expanded(
-                    child: AnimatedStatCard(
-                      title: "Interaksi",
-                      value: completedHelp.toDouble(),
-                      icon: Icons.handshake_rounded,
-                    ),
-                  ),
-
-                  const SizedBox(width: 16),
-
-                  Expanded(
-                    child: AnimatedStatCard(
-                      title: "Rating",
-                      value: rating,
-                      icon: Icons.star_rounded,
-                      isDecimal: true,
-                    ),
-                  ),
                 ],
               ),
 
               const SizedBox(height: 28),
 
-              // =====================================
-              // INSIGHT
-              // =====================================
-              const _InsightSection(),
+              if (hasUrgent) ...[
+                const Text(
+                  "Bantuan Mendesak",
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 14),
+                ...urgentRequests.map(
+                  (req) => Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: _UrgentCard(request: req),
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
 
-              const SizedBox(height: 28),
-
-              // =====================================
-              // URGENT
-              // =====================================
               const Text(
-                "Tetangga Terdekat 🔥",
+                "Request Terbaru",
                 style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 14),
 
-              if (requests.isNotEmpty) _UrgentCard(request: requests.first),
-
-              const SizedBox(height: 28),
-
-              // =====================================
-              // REQUEST LIST
-              // =====================================
-              const Text(
-                "Tetangga Sekitar",
-                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-              ),
-
-              const SizedBox(height: 14),
-
-              if (requests.isEmpty)
+              if (helpRequestsList.isEmpty ||
+                  helpRequestsList.length == urgentRequests.length)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(35),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
                         blurRadius: 18,
                         offset: const Offset(0, 8),
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha: 0.03),
                       ),
                     ],
                   ),
                   child: Column(
                     children: [
                       Icon(
-                        Icons.location_off_rounded,
+                        Icons.check_circle_outline_rounded,
                         size: 65,
                         color: Colors.grey.shade400,
                       ),
-
                       const SizedBox(height: 14),
-
                       Text(
-                        "Belum ada tetangga terdekat ditemukan",
+                        "Belum ada request bantuan",
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 15,
@@ -345,15 +342,18 @@ class _BerandaPageState extends State<BerandaPage> {
                 ),
 
               Column(
-                children: requests.map((req) {
-                  return RequestCard(
-                    name: req["full_name"] ?? "Unknown",
-                    title: req["address"] ?? "Tidak ada alamat",
-                    distance: "${(req["distance"] ?? 0).toStringAsFixed(1)} km",
-                    urgent: (req["distance"] ?? 0) < 0.2,
-                    time: "Tetangga sekitar",
-                  );
-                }).toList(),
+                children: helpRequestsList
+                    .where((req) => req["category"] != "urgent")
+                    .map((req) {
+                      return RequestCard(
+                        name: req["username"] ?? "Unknown",
+                        title: req["title"] ?? "Tanpa Judul",
+                        distance: "-",
+                        urgent: false,
+                        time: getTimeAgo(req["created_at"]),
+                      );
+                    })
+                    .toList(),
               ),
             ],
           ),
@@ -362,12 +362,6 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 }
-
-//
-// =====================================
-// ANIMATED STAT CARD
-// =====================================
-//
 
 class AnimatedStatCard extends StatefulWidget {
   final String title;
@@ -424,13 +418,15 @@ class _AnimatedStatCardState extends State<AnimatedStatCard>
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
-              color: Colors.white.withOpacity(0.8),
-              border: Border.all(color: AppColors.primary.withOpacity(0.08)),
+              color: Colors.white.withValues(alpha: 0.8),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.08),
+              ),
               boxShadow: [
                 BoxShadow(
                   blurRadius: 18,
                   offset: const Offset(0, 8),
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                 ),
               ],
             ),
@@ -439,14 +435,12 @@ class _AnimatedStatCardState extends State<AnimatedStatCard>
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(widget.icon, color: AppColors.primary),
                 ),
-
                 const SizedBox(width: 12),
-
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,9 +452,7 @@ class _AnimatedStatCardState extends State<AnimatedStatCard>
                           fontSize: 18,
                         ),
                       ),
-
                       const SizedBox(height: 4),
-
                       Text(
                         widget.title,
                         style: TextStyle(
@@ -486,74 +478,6 @@ class _AnimatedStatCardState extends State<AnimatedStatCard>
   }
 }
 
-//
-// =====================================
-// INSIGHT SECTION
-// =====================================
-//
-
-class _InsightSection extends StatelessWidget {
-  const _InsightSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: Colors.white.withOpacity(0.8),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-            color: Colors.black.withOpacity(0.03),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: const [
-          _InlineInsight("Aktif", "Komunitas"),
-          _InlineInsight("+80%", "Respons"),
-          _InlineInsight("Top Area", "Lingkungan"),
-        ],
-      ),
-    );
-  }
-}
-
-class _InlineInsight extends StatelessWidget {
-  final String value;
-  final String label;
-
-  const _InlineInsight(this.value, this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-        ),
-
-        const SizedBox(height: 5),
-
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-        ),
-      ],
-    );
-  }
-}
-
-//
-// =====================================
-// URGENT CARD
-// =====================================
-//
-
 class _UrgentCard extends StatelessWidget {
   final dynamic request;
 
@@ -565,55 +489,51 @@ class _UrgentCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          colors: [Colors.red.shade400, Colors.red.shade300],
-        ),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            color: Colors.red.withOpacity(0.2),
-          ),
-        ],
+        color: Colors.grey,
       ),
       child: Row(
         children: [
-          const Icon(Icons.location_on, color: Colors.white, size: 32),
-
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.white,
+            size: 32,
+          ),
           const SizedBox(width: 14),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  request["full_name"] ?? "Unknown",
+                  request["username"] ?? "Unknown",
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
-                  request["address"] ?? "-",
+                  request["title"] ?? "-",
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.white.withOpacity(0.92)),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.92)),
                 ),
               ],
             ),
           ),
-
           const SizedBox(width: 12),
-
-          Text(
-            "${(request["distance"] ?? 0).toStringAsFixed(1)} km",
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              "Urgent",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -621,11 +541,6 @@ class _UrgentCard extends StatelessWidget {
     );
   }
 }
-//
-// =====================================
-// REQUEST CARD
-// =====================================
-//
 
 class RequestCard extends StatelessWidget {
   final String name;
@@ -640,54 +555,48 @@ class RequestCard extends StatelessWidget {
     required this.title,
     required this.distance,
     this.urgent = false,
-    this.time = "Baru saja",
+    required this.time,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Color accent = urgent ? Colors.red : AppColors.primary;
+    final Color accent = urgent ? AppColors.primarySoft : AppColors.primary;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Colors.white.withOpacity(0.8),
-        border: Border.all(color: accent.withOpacity(0.15)),
+        color: Colors.white.withValues(alpha: 0.8),
+        border: Border.all(color: accent.withValues(alpha: 0.15)),
         boxShadow: [
           BoxShadow(
             blurRadius: 18,
             offset: const Offset(0, 8),
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
           ),
         ],
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: accent.withOpacity(0.1),
+            backgroundColor: accent.withValues(alpha: 0.1),
             child: Icon(Icons.person, color: accent),
           ),
-
           const SizedBox(width: 14),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-
                 const SizedBox(height: 4),
-
                 Text(
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
                 ),
-
                 const SizedBox(height: 6),
-
                 Text(
                   time,
                   style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
@@ -695,29 +604,27 @@ class RequestCard extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(width: 12),
-
           Column(
             children: [
-              Text(
-                distance,
-                style: TextStyle(color: accent, fontWeight: FontWeight.bold),
-              ),
-
+              if (distance != "-")
+                Text(
+                  distance,
+                  style: TextStyle(color: accent, fontWeight: FontWeight.bold),
+                ),
               if (urgent)
                 Container(
-                  margin: const EdgeInsets.only(top: 6),
+                  margin: EdgeInsets.only(top: distance != "-" ? 6 : 0),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red,
+                    color: AppColors.primarySoft,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
-                    "DEKAT",
+                    "URGENT",
                     style: TextStyle(color: Colors.white, fontSize: 10),
                   ),
                 ),

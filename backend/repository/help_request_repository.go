@@ -64,6 +64,8 @@ func (r *helpRequestRepository) GetNearbyHelpRequests(lat, lon float64, excludeU
 		Select(`
 			u.id AS user_id,
 			u.username,
+			u.coordinate_lat AS latitude,
+			u.coordinate_long AS longitude,
 			(6371000 * acos(
 				LEAST(1.0,
 					cos(radians(?)) * cos(radians(u.coordinate_lat)) *
@@ -85,7 +87,9 @@ func (r *helpRequestRepository) GetNearbyHelpRequests(lat, lon float64, excludeU
 			hr.category,
 			hr.status,
 			hr.created_at,
-			sub.distance
+			sub.distance,
+			sub.latitude,
+			sub.longitude
 		`).
 		Joins("JOIN (?) sub ON hr.user_id = sub.user_id", subQuery).
 		Where("sub.distance < ?", radiusMeters).

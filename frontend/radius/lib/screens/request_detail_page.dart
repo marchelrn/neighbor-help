@@ -4,20 +4,28 @@ import '../theme/app_colors.dart';
 class RequestDetailPage extends StatelessWidget {
   final String name;
   final String title;
+  final String description;
   final String distance;
+  final String time;
   final bool urgent;
+  final VoidCallback? onChat;
+  final VoidCallback? onAmbil;
 
   const RequestDetailPage({
     super.key,
     required this.name,
     required this.title,
     required this.distance,
+    required this.time,
+    required this.description,
     this.urgent = false,
+    this.onChat,
+    this.onAmbil,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Color accent = urgent ? Colors.red : AppColors.primary;
+    final Color accent = urgent ? AppColors.primarySoft : AppColors.primary;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
@@ -31,9 +39,6 @@ class RequestDetailPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // =========================
-            // 🔹 USER INFO
-            // =========================
             _accentCard(
               accent: accent,
               child: Row(
@@ -76,7 +81,7 @@ class RequestDetailPage extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: onChat,
                     icon: const Icon(Icons.chat_bubble_outline),
                   ),
                 ],
@@ -94,9 +99,9 @@ class RequestDetailPage extends StatelessWidget {
                 children: [
                   _statusChip(urgent ? "URGENT" : "AKTIF", accent),
                   const SizedBox(width: 10),
-                  const Text(
-                    "Dibuat 1 hari lalu",
-                    style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                  Text(
+                    time,
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                   ),
                   const Spacer(),
                   const Icon(Icons.flag_outlined, size: 16),
@@ -130,9 +135,7 @@ class RequestDetailPage extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
                   const Text(
                     "DESKRIPSI",
                     style: TextStyle(
@@ -142,9 +145,9 @@ class RequestDetailPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    "Saya membutuhkan bantuan untuk menyelesaikan pekerjaan ini. Estimasi waktu sekitar beberapa jam dan membutuhkan tenaga tambahan.",
-                    style: TextStyle(
+                  Text(
+                    description,
+                    style: const TextStyle(
                       height: 1.5,
                       fontSize: 13.5,
                       color: Color(0xFF374151),
@@ -154,16 +157,6 @@ class RequestDetailPage extends StatelessWidget {
                   const SizedBox(height: 18),
                   const Divider(),
                   const SizedBox(height: 12),
-
-                  Row(
-                    children: [
-                      Expanded(child: _infoBox("Durasi", "±3 jam")),
-                      const SizedBox(width: 10),
-                      Expanded(child: _infoBox("Helper", "1 orang")),
-                      const SizedBox(width: 10),
-                      Expanded(child: _infoBox("Status", "Menunggu")),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -192,7 +185,7 @@ class RequestDetailPage extends StatelessWidget {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: onChat,
                           icon: const Icon(Icons.chat),
                           label: const Text("Chat"),
                           style: OutlinedButton.styleFrom(
@@ -203,9 +196,9 @@ class RequestDetailPage extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: onAmbil,
                           icon: const Icon(Icons.check),
-                          label: const Text("Ambil"),
+                          label: const Text("Bantu"),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: accent,
                           ),
@@ -233,7 +226,7 @@ class RequestDetailPage extends StatelessWidget {
         border: Border.all(color: const Color(0xFFD1D5DB), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -270,9 +263,9 @@ class RequestDetailPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         text,
@@ -286,34 +279,5 @@ class RequestDetailPage extends StatelessWidget {
     );
   }
 
-  // =========================
-  // 🔹 INFO BOX
-  // =========================
-  Widget _infoBox(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 10,
-              letterSpacing: 0.8,
-              color: Color(0xFF9CA3AF),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          ),
-        ],
-      ),
-    );
-  }
+
 }

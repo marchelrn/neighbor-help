@@ -15,7 +15,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final emailController = TextEditingController();
+  final usernameController = TextEditingController();
 
   final passwordController = TextEditingController();
 
@@ -51,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       final response = await AuthService.login(
-        email: emailController.text.trim(),
+        username: usernameController.text.trim(),
         password: passwordController.text.trim(),
       );
 
@@ -126,10 +126,10 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 40),
 
                 TextField(
-                  controller: emailController,
+                  controller: usernameController,
                   decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email),
+                    labelText: 'Username',
+                    prefixIcon: Icon(Icons.person),
                   ),
                 ),
 

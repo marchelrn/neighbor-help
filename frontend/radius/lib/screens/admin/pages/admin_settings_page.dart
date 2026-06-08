@@ -103,7 +103,7 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                         color: AdminColors.surface,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: AdminColors.error.withOpacity(0.3),
+                          color: AdminColors.error.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Column(
@@ -374,7 +374,7 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
     return Switch(
       value: val,
       onChanged: onChanged,
-      activeColor: AdminColors.primary,
+      activeThumbColor: AdminColors.primary,
       activeTrackColor: AdminColors.primaryLight,
     );
   }
@@ -463,7 +463,7 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        border: Border.all(color: AdminColors.error.withOpacity(0.2)),
+        border: Border.all(color: AdminColors.error.withValues(alpha: 0.2)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
