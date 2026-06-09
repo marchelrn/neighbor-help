@@ -212,7 +212,6 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   }
 
   Widget _buildRow(Map<String, dynamic> user, int index) {
-    final isSuspended = user['status'] == 'Suspended';
     final isSelected = _selectedUserIndex == index;
 
     return GestureDetector(
