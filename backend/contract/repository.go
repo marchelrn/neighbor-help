@@ -34,12 +34,14 @@ type HelpRequestRepository interface {
 	GetHelpRequestByUserID(id uint) ([]*models.HelpRequest, error)
 	GetNearbyHelpRequests(lat, lon float64, excludeUserID uint, radiusMeters float64) ([]*models.NearbyHelpRequest, error)
 	UpdateHelpRequest(payload *models.HelpRequest) error
+	DeleteHelpRequest(id uint) error
 }
 
 type MessagesRepository interface {
 	GetMessagesByHelpRequestID(helpRequestID uint) ([]*models.Messages, error)
 	CreateMessage(payload *models.Messages) error
 	SaveMessage(payload *models.Messages) error
+	DeleteMessageByHelpRequestID(id uint) error
 }
 
 type NotificationRepository interface {
@@ -47,4 +49,5 @@ type NotificationRepository interface {
 	CreateNotification(payload *models.Notifications) error
 	GetUnreadCountByUserID(userID uint) (int64, error)
 	MarkAsReadByUserID(userID uint) error
+	DeleteNotificationByHelpRequestID(helpRequestID uint) error
 }

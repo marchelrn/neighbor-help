@@ -3,4 +3,9 @@ backend/*.log
 backend/*.out
 backend/bin/
 backend/tmp/
-/frontend
+# Hasil build distribusi (jangan di-push ke git)
+NeighborHelpApp/
+NeighborHelpApp_Windows/
+*.tar.gz
+*.zip
+*.exe

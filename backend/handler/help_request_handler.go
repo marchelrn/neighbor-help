@@ -84,8 +84,8 @@ func (h *HelpRequestController) UpdateHelpRequest(c *gin.Context) {
 		return
 	}
 	c.JSON(response.Status, gin.H{
-		"status":        response.Status,
-		"message":       response.Message,
+		"status":  response.Status,
+		"message": response.Message,
 	})
 }
 
@@ -139,5 +139,31 @@ func (h *HelpRequestController) GetHelpRequestByUserID(c *gin.Context) {
 		"status":        response.Status,
 		"message":       response.Message,
 		"help_requests": response.HelpRequests,
+	})
+}
+
+func (h *HelpRequestController) DeleteHelpRequest(c *gin.Context) {
+	_, exists := c.Get("UserID")
+	if !exists {
+		HandleError(c, errs.Unauthorized("Unauthorized"))
+		return
+	}
+
+	helpRequestIDParam := c.Param("id")
+	helpRequestID, err := strconv.Atoi(helpRequestIDParam)
+	if err != nil || helpRequestID <= 0 {
+		HandleError(c, errs.BadRequest("Invalid help request ID"))
+		return
+	}
+
+	response, err := h.HelpRequestService.DeleteHelpRequest(uint(helpRequestID))
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  response.Status,
+		"message": response.Message,
 	})
 }

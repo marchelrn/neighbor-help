@@ -58,10 +58,10 @@ class _RequestListPageState extends State<RequestListPage> {
 
         setState(() {
           _activeRequests = requests
-              .where((req) => req["status"] != "completed")
+              .where((req) => req["status"] != "solved")
               .toList();
           _completedRequests = requests
-              .where((req) => req["status"] == "completed")
+              .where((req) => req["status"] == "solved")
               .toList();
           _isLoading = false;
         });
@@ -211,7 +211,7 @@ class _RequestListPageState extends State<RequestListPage> {
                                   await AuthService.updateHelpRequestStatus(
                                     token,
                                     req["id"],
-                                    "completed",
+                                    "solved",
                                   );
                                   _fetchMyRequests(); // Refresh
                                 }
@@ -221,7 +221,11 @@ class _RequestListPageState extends State<RequestListPage> {
                             },
                             onChat: () {
                               if (widget.onChatSelected != null) {
-                                widget.onChatSelected!(req["username"] ?? "Sistem", true, req["id"]);
+                                widget.onChatSelected!(
+                                  req["username"] ?? "Sistem",
+                                  true,
+                                  req["id"],
+                                );
                               }
                             },
                           ),
@@ -261,7 +265,11 @@ class _RequestListPageState extends State<RequestListPage> {
                             },
                             onChat: () {
                               if (widget.onChatSelected != null) {
-                                widget.onChatSelected!(req["username"] ?? "Sistem", false, req["id"]);
+                                widget.onChatSelected!(
+                                  req["username"] ?? "Sistem",
+                                  false,
+                                  req["id"],
+                                );
                               }
                             },
                           ),

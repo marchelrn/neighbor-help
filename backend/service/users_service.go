@@ -66,6 +66,7 @@ func (u *UsersService) Register(payload *dto.UsersRequest) (*dto.UsersResponse, 
 		Password:        string(hashedPassword),
 		FullName:        payload.FullName,
 		Address:         payload.Address,
+		Role:            payload.Role,
 		Coordinate_lat:  payload.Coordinate_lat,
 		Coordinate_long: payload.Coordinate_long,
 	}
@@ -83,6 +84,7 @@ func (u *UsersService) Register(payload *dto.UsersRequest) (*dto.UsersResponse, 
 			Username:        userModel.Username,
 			FullName:        userModel.FullName,
 			Address:         userModel.Address,
+			Role:            userModel.Role,
 			Coordinate_lat:  userModel.Coordinate_lat,
 			Coordinate_long: userModel.Coordinate_long,
 		},
@@ -106,7 +108,7 @@ func (u *UsersService) Login(payload *dto.LoginRequest) (*dto.LoginResponse, err
 		return nil, errs.BadRequest("Invalid Password")
 	}
 
-	t, err := token.GenerateToken(user.ID, user.Username)
+	t, err := token.GenerateToken(user.ID, user.Username, user.Role)
 	if err != nil {
 		return nil, errs.InternalServerError("Failed to generate token")
 	}
@@ -125,24 +127,30 @@ func (u *UsersService) UpdateUser(username string, usernameParam string, payload
 		return nil, errs.BadRequest("Invalid request payload")
 	}
 
-	user, err := u.UserRepository.GetUserByUsername(username)
+	requester, err := u.UserRepository.GetUserByUsername(username)
 	if err != nil {
 		return nil, errs.NotFound("User Not Found")
 	}
+
+	if username != usernameParam && requester.Role != "admin" {
+		return nil, errs.Unauthorized("You can only update your own account")
+	}
+
+	targetUser, err := u.UserRepository.GetUserByUsername(usernameParam)
+	if err != nil {
+		return nil, errs.NotFound("Target User Not Found")
+	}
+
 	if payload.Username != nil {
 		if !utils.IsValidUsername(*payload.Username) {
 			return nil, errs.BadRequest("Invalid Username")
 		}
 
 		usrExists, err := u.UserRepository.GetUserByUsername(*payload.Username)
-		if err == nil && usrExists.Username != username {
+		if err == nil && usrExists.Username != usernameParam {
 			return nil, errs.Conflict("Username already taken")
 		}
-		user.Username = *payload.Username
-	}
-
-	if username != usernameParam {
-		return nil, errs.Unauthorized("You can only update your own account")
+		targetUser.Username = *payload.Username
 	}
 
 	if payload.Password != nil {
@@ -153,25 +161,29 @@ func (u *UsersService) UpdateUser(username string, usernameParam string, payload
 		if err != nil {
 			return nil, errs.InternalServerError("Failed to hash password")
 		}
-		user.Password = string(hashed)
+		targetUser.Password = string(hashed)
 	}
 
 	if payload.FullName != nil {
-		user.FullName = *payload.FullName
+		targetUser.FullName = *payload.FullName
 	}
 
 	if payload.Address != nil {
-		user.Address = *payload.Address
+		targetUser.Address = *payload.Address
+	}
+
+	if payload.Role != nil {
+		targetUser.Role = *payload.Role
 	}
 
 	if payload.Coordinate_lat != nil {
-		user.Coordinate_lat = *payload.Coordinate_lat
+		targetUser.Coordinate_lat = *payload.Coordinate_lat
 	}
 	if payload.Coordinate_long != nil {
-		user.Coordinate_long = *payload.Coordinate_long
+		targetUser.Coordinate_long = *payload.Coordinate_long
 	}
 
-	err = u.UserRepository.UpdateUser(username, user)
+	err = u.UserRepository.UpdateUser(usernameParam, targetUser)
 	if err != nil {
 		return nil, errs.InternalServerError("Failed to update User")
 	}
@@ -180,12 +192,13 @@ func (u *UsersService) UpdateUser(username string, usernameParam string, payload
 		Status:  http.StatusOK,
 		Message: "Update Success",
 		Data: dto.UsersData{
-			ID:              user.ID,
-			Username:        user.Username,
-			FullName:        user.FullName,
-			Address:         user.Address,
-			Coordinate_lat:  user.Coordinate_lat,
-			Coordinate_long: user.Coordinate_long,
+			ID:              targetUser.ID,
+			Username:        targetUser.Username,
+			FullName:        targetUser.FullName,
+			Address:         targetUser.Address,
+			Role:            targetUser.Role,
+			Coordinate_lat:  targetUser.Coordinate_lat,
+			Coordinate_long: targetUser.Coordinate_long,
 		},
 	}
 	return response, nil
@@ -224,6 +237,7 @@ func (u *UsersService) GetUsers() (*dto.AllUsersResponse, error) {
 			Username:        user.Username,
 			FullName:        user.FullName,
 			Address:         user.Address,
+			Role:            user.Role,
 			Coordinate_lat:  user.Coordinate_lat,
 			Coordinate_long: user.Coordinate_long,
 		})
@@ -248,6 +262,7 @@ func (u *UsersService) GetUserByID(id uint) (*dto.UsersResponse, error) {
 			Username:        user.Username,
 			FullName:        user.FullName,
 			Address:         user.Address,
+			Role:            user.Role,
 			Coordinate_lat:  user.Coordinate_lat,
 			Coordinate_long: user.Coordinate_long,
 		},

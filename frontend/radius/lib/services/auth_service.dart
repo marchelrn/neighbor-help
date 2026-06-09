@@ -172,7 +172,29 @@ class AuthService {
 
     throw Exception('Failed to get current user');
   }
+  // =========================
+  // UPDATE CURRENT USER
+  // =========================
 
+  static Future<void> updateUser(
+    String token,
+    String username,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/user/$username'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode != 200) {
+      final resData = jsonDecode(response.body);
+      throw Exception(resData['message'] ?? 'Failed to update user');
+    }
+  }
   // =========================
   // GET NOTIFICATIONS
   // =========================

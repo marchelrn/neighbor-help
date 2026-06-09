@@ -33,6 +33,7 @@ type HelpRequestService interface {
 	GetHelpRequestByID(helpRequestID uint) (*dto.HelpRequestResponse, error)
 	GetHelpRequestByUserID(userID uint) (*dto.HelpRequestResponse, error)
 	UpdateHelpRequest(userID uint, helpRequestID uint, payload *dto.UpdateHelpRequest) (*dto.BasicResponse, error)
+	DeleteHelpRequest(id uint) (*dto.BasicResponse, error)
 }
 
 type ChatService interface {

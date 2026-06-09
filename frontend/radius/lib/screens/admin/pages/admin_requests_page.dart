@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:radius/screens/admin/admin_colors.dart';
 import 'package:radius/screens/admin/admin_widgets.dart';
+import 'package:radius/services/admin_service.dart';
 
 class AdminRequestsPage extends StatefulWidget {
   const AdminRequestsPage({super.key});
@@ -13,92 +14,91 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
   String _filter = 'Semua';
   int? _selected;
 
-  final List<Map<String, dynamic>> _requests = [
-    {
-      'title': 'Butuh bantuan angkat galon ke lantai 2',
-      'user': 'Andi Firmansyah',
-      'area': 'Malalayang',
-      'category': 'Fisik',
-      'status': 'Aktif',
-      'distance': '120m',
-      'time': '5 mnt lalu',
-      'helpers': 1,
-      'description':
-          'Perlu 2-3 orang untuk membantu angkat galon air bersih ke lantai 2 rumah. Galon berjumlah 3 buah, tersedia minuman sebagai balas budi.',
-      'duration': '±1 jam',
-      'urgent': true,
-    },
-    {
-      'title': 'Pinjam tangga untuk ganti lampu',
-      'user': 'Siti Rahayu',
-      'area': 'Tikala',
-      'category': 'Peralatan',
-      'status': 'Dalam Proses',
-      'distance': '200m',
-      'time': '12 mnt lalu',
-      'helpers': 1,
-      'description':
-          'Membutuhkan pinjaman tangga lipat untuk mengganti lampu plafon yang mati. Estimasi penggunaan 30 menit.',
-      'duration': '±30 mnt',
-      'urgent': false,
-    },
-    {
-      'title': 'Bantuan pindahan minggu depan',
-      'user': 'Budi Santoso',
-      'area': 'Wenang',
-      'category': 'Fisik',
-      'status': 'Selesai',
-      'distance': '350m',
-      'time': '1 jam lalu',
-      'helpers': 3,
-      'description':
-          'Membutuhkan bantuan untuk memindahkan perabotan rumah ke lokasi baru yang berjarak 2 km.',
-      'duration': '±4 jam',
-      'urgent': false,
-    },
-    {
-      'title': 'Pasang TV di dinding',
-      'user': 'Grace Tampi',
-      'area': 'Sario',
-      'category': 'Teknis',
-      'status': 'Aktif',
-      'distance': '450m',
-      'time': '2 jam lalu',
-      'helpers': 0,
-      'description':
-          'Butuh bantuan untuk memasang bracket dan TV LED 43 inch di dinding ruang tamu.',
-      'duration': '±2 jam',
-      'urgent': false,
-    },
-    {
-      'title': 'Ibu Lisa butuh bantuan sekarang!',
-      'user': 'Lisa Pangemanan',
-      'area': 'Tuminting',
-      'category': 'Darurat',
-      'status': 'Aktif',
-      'distance': '50m',
-      'time': '3 mnt lalu',
-      'helpers': 2,
-      'description':
-          'Ibu Lisa mengalami kecelakaan ringan di rumah, butuh bantuan untuk diantarkan ke klinik terdekat.',
-      'duration': 'Segera',
-      'urgent': true,
-    },
-    {
-      'title': 'Pinjam mesin jahit',
-      'user': 'Dewi Kusuma',
-      'area': 'Bunaken',
-      'category': 'Peralatan',
-      'status': 'Dibatalkan',
-      'distance': '300m',
-      'time': '1 hari lalu',
-      'helpers': 0,
-      'description':
-          'Perlu pinjam mesin jahit untuk memperbaiki beberapa pakaian.',
-      'duration': '±2 hari',
-      'urgent': false,
-    },
-  ];
+  List<Map<String, dynamic>> _requests = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRequests();
+  }
+
+  Future<void> _fetchRequests() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await AdminService.getHelpRequests();
+      setState(() {
+        _requests = data.map((r) {
+          final isUrgent =
+              r['category'] == 'urgent' || r['category'] == 'Darurat';
+          return {
+            'id': r['id'] ?? 0,
+            'title': r['title'] ?? '',
+            'user': r['username'] ?? 'Unknown',
+            'category': isUrgent ? 'Darurat' : 'Normal',
+            'status': _mapStatusFromApi(r['status']),
+            'area': r['address'] ?? '-',
+            'distance': '-',
+            'time': r['created_at'] != null
+                ? r['created_at'].toString().split('T')[0]
+                : '-',
+            'helpers': 0,
+            'description': r['description'] ?? '',
+            'duration': '-',
+            'urgent': isUrgent,
+          };
+        }).toList();
+        _selected = null;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal memuat permintaan: $e')));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _mapStatusFromApi(String? apiStatus) {
+    if (apiStatus == 'pending') return 'Aktif';
+    if (apiStatus == 'solved') return 'Selesai';
+    return 'Aktif';
+  }
+
+  String _mapStatusToApi(String uiStatus) {
+    if (uiStatus == 'Selesai') return 'solved';
+    return 'pending'; // Default for Aktif, Dalam Proses, etc
+  }
+
+  Future<void> _updateStatus(int id, String newStatus) async {
+    try {
+      await AdminService.updateHelpRequest(id, {
+        'status': _mapStatusToApi(newStatus),
+      });
+      _fetchRequests();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Status berhasil diupdate')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengupdate status: $e')));
+    }
+  }
+
+  Future<void> _deleteRequest(int id) async {
+    try {
+      await AdminService.deleteHelpRequest(id);
+      _fetchRequests();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Permintaan berhasil dihapus')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menghapus permintaan: $e')));
+    }
+  }
 
   List<Map<String, dynamic>> get _filtered {
     if (_filter == 'Semua') return _requests;
@@ -107,6 +107,10 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Row(
       children: [
         Expanded(
@@ -119,19 +123,21 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
                 AdminPageHeader(
                   title: 'Kelola Permintaan Bantuan',
                   subtitle: '${_requests.length} total permintaan',
+                  actions: [
+                    AdminButton(
+                      label: 'Refresh',
+                      icon: Icons.refresh_rounded,
+                      variant: AdminButtonVariant.outline,
+                      onTap: _fetchRequests,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
 
                 Row(
                   children: [
                     AdminFilterChips(
-                      options: const [
-                        'Semua',
-                        'Aktif',
-                        'Dalam Proses',
-                        'Selesai',
-                        'Dibatalkan',
-                      ],
+                      options: const ['Semua', 'Aktif', 'Selesai'],
                       initial: _filter,
                       onSelected: (v) => setState(() {
                         _filter = v;
@@ -164,6 +170,13 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
   }
 
   Widget _buildRequestList() {
+    if (_filtered.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(child: Text("Tidak ada permintaan")),
+      );
+    }
+
     return Column(
       children: List.generate(_filtered.length, (i) {
         final r = _filtered[i];
@@ -390,18 +403,8 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
           const SizedBox(height: 14),
 
           _detailRow(Icons.person_rounded, 'Pembuat', r['user']),
-          _detailRow(
-            Icons.location_on_rounded,
-            'Area',
-            '${r['area']} (${r['distance']})',
-          ),
+          _detailRow(Icons.location_on_rounded, 'Area', '${r['address']}'),
           _detailRow(Icons.category_rounded, 'Kategori', r['category']),
-          _detailRow(Icons.access_time_rounded, 'Durasi', r['duration']),
-          _detailRow(
-            Icons.people_rounded,
-            'Jumlah Helper',
-            '${r['helpers']} orang',
-          ),
           _detailRow(Icons.schedule_rounded, 'Diposting', r['time']),
           const SizedBox(height: 20),
 
@@ -417,15 +420,14 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: ['Aktif', 'Dalam Proses', 'Selesai', 'Dibatalkan'].map((
-              s,
-            ) {
+            children: ['Aktif', 'Selesai'].map((s) {
               return AdminButton(
                 label: s,
                 small: true,
                 variant: r['status'] == s
                     ? AdminButtonVariant.primary
                     : AdminButtonVariant.outline,
+                onTap: () => _updateStatus(r['id'], s),
               );
             }).toList(),
           ),
@@ -438,6 +440,7 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
             label: 'Hapus Permintaan',
             icon: Icons.delete_outline_rounded,
             variant: AdminButtonVariant.danger,
+            onTap: () => _deleteRequest(r['id']),
           ),
         ],
       ),

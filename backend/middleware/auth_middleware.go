@@ -9,7 +9,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func isAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.GetString("Role") != "admin" {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"message": "Unauthorized",
+			})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+func AuthMiddleware(isAdmin bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -37,8 +50,17 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		if isAdmin && strings.ToLower(claims.Role) != "admin" {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"message": "Unauthorized: admin access required (your role is '" + claims.Role + "')",
+			})
+			c.Abort()
+			return
+		}
+
 		c.Set("UserID", claims.UserID)
 		c.Set("Username", claims.Username)
+		c.Set("Role", claims.Role)
 		c.Next()
 	}
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:radius/screens/admin/admin_colors.dart';
 import 'package:radius/screens/admin/admin_widgets.dart';
+import 'package:radius/services/admin_service.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
@@ -13,81 +14,60 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   String _filterStatus = 'Semua';
   int? _selectedUserIndex;
 
-  // ── Mock data ──
-  final List<Map<String, dynamic>> _users = [
-    {
-      'name': 'Budi Santoso',
-      'email': 'budi@example.com',
-      'area': 'Malalayang, Manado',
-      'joined': '12 Jan 2026',
-      'status': 'Aktif',
-      'helps': 23,
-      'rating': 4.9,
-    },
-    {
-      'name': 'Rina Hartati',
-      'email': 'rina@example.com',
-      'area': 'Tikala, Manado',
-      'joined': '20 Jan 2026',
-      'status': 'Aktif',
-      'helps': 18,
-      'rating': 4.8,
-    },
-    {
-      'name': 'Christo Budiman',
-      'email': 'christo@example.com',
-      'area': 'Wenang, Manado',
-      'joined': '3 Feb 2026',
-      'status': 'Aktif',
-      'helps': 15,
-      'rating': 4.7,
-    },
-    {
-      'name': 'Siti Rahayu',
-      'email': 'siti@example.com',
-      'area': 'Tuminting, Manado',
-      'joined': '8 Feb 2026',
-      'status': 'Suspended',
-      'helps': 5,
-      'rating': 3.2,
-    },
-    {
-      'name': 'Andi Firmansyah',
-      'email': 'andi@example.com',
-      'area': 'Wanea, Manado',
-      'joined': '15 Feb 2026',
-      'status': 'Aktif',
-      'helps': 11,
-      'rating': 4.5,
-    },
-    {
-      'name': 'Dewi Kusuma',
-      'email': 'dewi@example.com',
-      'area': 'Sario, Manado',
-      'joined': '22 Feb 2026',
-      'status': 'Aktif',
-      'helps': 7,
-      'rating': 4.3,
-    },
-    {
-      'name': 'Faisal Hamid',
-      'email': 'faisal@example.com',
-      'area': 'Mapanget, Manado',
-      'joined': '1 Mar 2026',
-      'status': 'Nonaktif',
-      'helps': 0,
-      'rating': 0.0,
-    },
-    {
-      'name': 'Grace Tampi',
-      'email': 'grace@example.com',
-      'area': 'Bunaken, Manado',
-      'joined': '5 Mar 2026',
-      'status': 'Aktif',
-      'helps': 3,
-      'rating': 4.1,
-    },
-  ];
+  List<Map<String, dynamic>> _users = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUsers();
+  }
+
+  Future<void> _fetchUsers() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await AdminService.getUsers();
+      setState(() {
+        _users = data.map((u) {
+          final role = u['role'] ?? 'user';
+          return {
+            'id': u['id'] ?? 0,
+            'username': u['username'] ?? '',
+            'name': u['full_name'] ?? u['username'] ?? 'Unknown',
+            'email': '-', // Email not returned by API
+            'area': u['address'] ?? '-',
+            'joined': '-', // Not returned
+            'status': role == 'admin'
+                ? 'Aktif'
+                : 'Aktif', // Mapping role to status for now
+            'role': role,
+            'helps': 0, // Not returned
+          };
+        }).toList();
+        _selectedUserIndex = null;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal memuat pengguna: $e')));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _deleteUser(int id) async {
+    try {
+      await AdminService.deleteUser(id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pengguna berhasil dihapus')),
+      );
+      _fetchUsers();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menghapus pengguna: $e')));
+    }
+  }
 
   List<Map<String, dynamic>> get _filtered {
     if (_filterStatus == 'Semua') return _users;
@@ -96,6 +76,10 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Row(
       children: [
         // ── Table area ──
@@ -111,14 +95,10 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   subtitle: '${_users.length} pengguna terdaftar',
                   actions: [
                     AdminButton(
-                      label: 'Ekspor Data',
-                      icon: Icons.download_rounded,
+                      label: 'Refresh',
+                      icon: Icons.refresh_rounded,
                       variant: AdminButtonVariant.outline,
-                    ),
-                    const SizedBox(width: 10),
-                    AdminButton(
-                      label: 'Tambah Admin',
-                      icon: Icons.person_add_rounded,
+                      onTap: _fetchUsers,
                     ),
                   ],
                 ),
@@ -198,13 +178,17 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 _th('Area', flex: 2),
                 _th('Bergabung', flex: 2),
                 _th('Bantuan', flex: 1),
-                _th('Rating', flex: 1),
                 _th('Status', flex: 2),
                 _th('Aksi', flex: 2),
               ],
             ),
           ),
           // Rows
+          if (rows.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(20),
+              child: Center(child: Text("Tidak ada pengguna")),
+            ),
           ...List.generate(rows.length, (i) => _buildRow(rows[i], i)),
         ],
       ),
@@ -216,6 +200,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       flex: flex,
       child: Text(
         label,
+        textAlign: TextAlign.center,
         style: const TextStyle(
           fontSize: 11.5,
           fontWeight: FontWeight.w700,
@@ -247,17 +232,20 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
             Expanded(
               flex: 3,
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
                     width: 32,
                     height: 32,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AdminColors.primarySoft,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
-                        user['name'][0],
+                        user['name'].toString().isNotEmpty
+                            ? user['name'][0].toUpperCase()
+                            : '?',
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           color: AdminColors.primary,
@@ -278,13 +266,15 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                             fontWeight: FontWeight.w600,
                             color: AdminColors.textPrimary,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          user['email'],
+                          '@${user['username']}',
                           style: const TextStyle(
                             fontSize: 11,
                             color: AdminColors.textLight,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -296,16 +286,19 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               flex: 2,
               child: Text(
                 user['area'],
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 12.5,
                   color: AdminColors.textSecondary,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Expanded(
               flex: 2,
               child: Text(
                 user['joined'],
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 12.5,
                   color: AdminColors.textSecondary,
@@ -316,6 +309,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               flex: 1,
               child: Text(
                 '${user['helps']}',
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -324,54 +318,28 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               ),
             ),
             Expanded(
-              flex: 1,
-              child: user['rating'] > 0
-                  ? Row(
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 13,
-                          color: Color(0xFFFBBF24),
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${user['rating']}',
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    )
-                  : const Text(
-                      '—',
-                      style: TextStyle(color: AdminColors.textLight),
-                    ),
-            ),
-            Expanded(
               flex: 2,
-              child: AdminStatusBadge(
-                label: user['status'],
-                type: user['status'] == 'Aktif'
-                    ? AdminBadgeType.success
-                    : user['status'] == 'Suspended'
-                    ? AdminBadgeType.error
-                    : AdminBadgeType.neutral,
+              child: Align(
+                alignment: Alignment.center,
+                child: AdminStatusBadge(
+                  label: user['role'] == 'admin' ? 'Admin' : 'User',
+                  type: user['role'] == 'admin'
+                      ? AdminBadgeType.info
+                      : AdminBadgeType.neutral,
+                ),
               ),
             ),
             Expanded(
               flex: 2,
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   AdminButton(
-                    label: isSuspended ? 'Aktifkan' : 'Suspend',
+                    label: 'Hapus',
                     small: true,
-                    variant: isSuspended
-                        ? AdminButtonVariant.ghost
-                        : AdminButtonVariant.danger,
-                    icon: isSuspended
-                        ? Icons.check_rounded
-                        : Icons.block_rounded,
+                    variant: AdminButtonVariant.danger,
+                    icon: Icons.delete_outline_rounded,
+                    onTap: () => _deleteUser(user['id']),
                   ),
                 ],
               ),
@@ -384,7 +352,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   Widget _buildUserDetail(Map<String, dynamic> user) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -395,7 +363,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 'Detail Pengguna',
                 style: TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                   color: AdminColors.textPrimary,
                 ),
               ),
@@ -418,13 +386,15 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 Container(
                   width: 64,
                   height: 64,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AdminColors.primarySoft,
                     shape: BoxShape.circle,
                   ),
                   child: Center(
                     child: Text(
-                      user['name'][0],
+                      user['name'].toString().isNotEmpty
+                          ? user['name'][0].toUpperCase()
+                          : '?',
                       style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
@@ -441,10 +411,11 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                     fontWeight: FontWeight.w700,
                     color: AdminColors.textPrimary,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  user['email'],
+                  '@${user['username']}',
                   style: const TextStyle(
                     fontSize: 12.5,
                     color: AdminColors.textSecondary,
@@ -452,10 +423,10 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 ),
                 const SizedBox(height: 10),
                 AdminStatusBadge(
-                  label: user['status'],
-                  type: user['status'] == 'Aktif'
-                      ? AdminBadgeType.success
-                      : AdminBadgeType.error,
+                  label: user['role'] == 'admin' ? 'Admin' : 'User',
+                  type: user['role'] == 'admin'
+                      ? AdminBadgeType.info
+                      : AdminBadgeType.neutral,
                 ),
               ],
             ),
@@ -468,36 +439,55 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           Row(
             children: [
               _detailStat('${user['helps']}', 'Bantuan'),
-              _detailStat('${user['rating']}', 'Rating'),
-              _detailStat('3', 'Laporan'),
+              _detailStat('0', 'Laporan'),
             ],
           ),
           const SizedBox(height: 20),
 
           // Info
-          _infoRow(Icons.location_on_rounded, 'Area', user['area']),
+          _infoRow(Icons.location_on_rounded, 'Alamat', user['area']),
           _infoRow(Icons.calendar_today_rounded, 'Bergabung', user['joined']),
-          _infoRow(Icons.smartphone_rounded, 'Platform', 'Windows Desktop'),
-          _infoRow(Icons.access_time_rounded, 'Login Terakhir', '2 jam lalu'),
+          _infoRow(Icons.email_rounded, 'Email', user['email']),
           const SizedBox(height: 20),
 
           // Actions
           AdminButton(
-            label: 'Kirim Peringatan',
-            icon: Icons.warning_amber_rounded,
+            label: user['role'] == 'admin'
+                ? 'Jadikan User Biasa'
+                : 'Jadikan Admin',
+            icon: user['role'] == 'admin'
+                ? Icons.person_rounded
+                : Icons.admin_panel_settings_rounded,
             variant: AdminButtonVariant.outline,
+            onTap: () async {
+              try {
+                final newRole = user['role'] == 'admin' ? 'user' : 'admin';
+                await AdminService.updateUser(user['username'], {
+                  'role': newRole,
+                });
+                _fetchUsers();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Peran berhasil diubah menjadi $newRole'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Gagal: $e')));
+                }
+              }
+            },
           ),
           const SizedBox(height: 10),
           AdminButton(
-            label: user['status'] == 'Suspended'
-                ? 'Aktifkan Akun'
-                : 'Suspend Akun',
-            icon: user['status'] == 'Suspended'
-                ? Icons.check_circle_rounded
-                : Icons.block_rounded,
-            variant: user['status'] == 'Suspended'
-                ? AdminButtonVariant.primary
-                : AdminButtonVariant.danger,
+            label: 'Hapus Akun',
+            icon: Icons.delete_forever_rounded,
+            variant: AdminButtonVariant.danger,
+            onTap: () => _deleteUser(user['id']),
           ),
         ],
       ),

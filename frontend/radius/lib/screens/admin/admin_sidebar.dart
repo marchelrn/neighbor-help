@@ -77,12 +77,6 @@ class AdminSidebar extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               children: [
-                _sectionLabel('MAIN'),
-                _menuItem(Icons.dashboard_rounded, 'Dashboard', 'Dashboard'),
-                _menuItem(Icons.bar_chart_rounded, 'Monitoring', 'Monitoring'),
-                _menuItem(Icons.assessment_rounded, 'Laporan', 'Laporan'),
-
-                const SizedBox(height: 10),
                 _sectionLabel('KELOLA'),
                 _menuItem(Icons.people_alt_rounded, 'Pengguna', 'Pengguna'),
                 _menuItem(
@@ -90,11 +84,6 @@ class AdminSidebar extends StatelessWidget {
                   'Permintaan Bantuan',
                   'Permintaan',
                 ),
-                _menuItem(Icons.flag_rounded, 'Moderasi', 'Moderasi'),
-
-                const SizedBox(height: 10),
-                _sectionLabel('SISTEM'),
-                _menuItem(Icons.settings_rounded, 'Pengaturan', 'Pengaturan'),
               ],
             ),
           ),
@@ -138,13 +127,6 @@ class AdminSidebar extends StatelessWidget {
                           color: Colors.white,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        'admin@radius.id',
-                        style: TextStyle(
-                          color: AdminColors.sidebarText,
-                          fontSize: 10.5,
                         ),
                       ),
                     ],

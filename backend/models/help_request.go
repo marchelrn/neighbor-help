@@ -12,13 +12,14 @@ const (
 type Status string
 
 const (
-	Pending  Status = "pending"
-	Resolved Status = "resolved"
+	Pending Status = "pending"
+	Solved  Status = "solved"
 )
 
 type HelpRequest struct {
 	ID          uint     `gorm:"primaryKey;autoIncrement"`
-	Username    string   `gorm:"tupe:varchar(25);column:username"`
+	Username    string   `gorm:"type:varchar(25);column:username"`
+	Address     string   `gorm:"column:address"`
 	UserID      uint     `gorm:"not null"`
 	Title       string   `gorm:"type:varchar(255);not null"`
 	Description string   `gorm:"type:varchar(255);not null"`

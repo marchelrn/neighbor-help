@@ -49,3 +49,10 @@ func (r *notificationRepository) MarkAsReadByUserID(userID uint) error {
 	}
 	return nil
 }
+
+func (r *notificationRepository) DeleteNotificationByHelpRequestID(helpRequestID uint) error {
+	if err := r.db.Where("help_request_id = ?", helpRequestID).Delete(&models.Notifications{}).Error; err != nil {
+		return err
+	}
+	return nil
+}

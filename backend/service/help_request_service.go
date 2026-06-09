@@ -16,81 +16,83 @@ type HelpRequestService struct {
 	HelpRequestRepository  contract.HelpRequestRepository
 	UsersRepository        contract.UsersRepository
 	NotificationRepository contract.NotificationRepository
+	MessagesRepository     contract.MessagesRepository
 }
 
-func implHelpRequestService(helpRepo contract.HelpRequestRepository, usersRepo contract.UsersRepository, notificationRepo contract.NotificationRepository) *HelpRequestService {
+func implHelpRequestService(helpRepo contract.HelpRequestRepository, usersRepo contract.UsersRepository, notificationRepo contract.NotificationRepository, messagesRepo contract.MessagesRepository) *HelpRequestService {
 	return &HelpRequestService{
 		HelpRequestRepository:  helpRepo,
 		UsersRepository:        usersRepo,
 		NotificationRepository: notificationRepo,
+		MessagesRepository:     messagesRepo,
 	}
 }
 
 func (s *HelpRequestService) CreateHelpRequest(userID uint, payload *dto.HelpRequest) (*dto.HelpRequestResponse, error) {
-    err := utils.ValidateStruct(payload)
-    if err != nil {
-        return nil, errs.BadRequest("Invalid request payload")
-    }
+	err := utils.ValidateStruct(payload)
+	if err != nil {
+		return nil, errs.BadRequest("Invalid request payload")
+	}
 
-    if payload.Category != "urgent" && payload.Category != "normal" {
-        return nil, errs.BadRequest("Category must be 'urgent' or 'normal'")
-    }
+	if payload.Category != "urgent" && payload.Category != "normal" {
+		return nil, errs.BadRequest("Category must be 'urgent' or 'normal'")
+	}
 
-    category := models.Normal
-    if payload.Category == "urgent" {
-        category = models.Urgent
-    }
-    
-    status := models.Pending
-    username := s.UsersRepository.GetUsernameByID(userID)
+	category := models.Normal
+	if payload.Category == "urgent" {
+		category = models.Urgent
+	}
 
-    helpRequest := &models.HelpRequest{
-        Username:    username,
-        UserID:      userID,
-        Title:       payload.Title,
-        Description: payload.Description,
-        Category:    category,
-        Status:      status,
-    }
+	status := models.Pending
+	username := s.UsersRepository.GetUsernameByID(userID)
 
-    err = s.HelpRequestRepository.CreateHelpRequest(helpRequest)
-    if err != nil {
-        return nil, err
-    }
+	helpRequest := &models.HelpRequest{
+		Username:    username,
+		UserID:      userID,
+		Title:       payload.Title,
+		Description: payload.Description,
+		Category:    category,
+		Status:      status,
+	}
 
-    // Notify nearby users (radius 10km for example)
-    creator, errCreator := s.UsersRepository.GetUserByID(userID)
-    if errCreator == nil {
-        nearbyUsers, _ := s.UsersRepository.GetNearbyUsers(creator.Coordinate_lat, creator.Coordinate_long, 10000, userID)
-        for _, u := range nearbyUsers {
-            uid := u.ID
-            _ = s.NotificationRepository.CreateNotification(&models.Notifications{
-                HelpRequestID: &helpRequest.ID,
-                UserID:        &uid, // Penerima notifikasi
-                Title:         fmt.Sprintf("Request baru: %s", helpRequest.Title),
-                Username:      username, // Pengirim request
-                IsRead:        false,
-                Created_at:    time.Now(),
-            })
-        }
-    }
+	err = s.HelpRequestRepository.CreateHelpRequest(helpRequest)
+	if err != nil {
+		return nil, err
+	}
 
-    response := []dto.HelpRequestData{{
-        ID:          helpRequest.ID,
-        Username:    helpRequest.Username,
-        UserID:      uint(helpRequest.UserID),
-        Title:       helpRequest.Title,
-        Description: helpRequest.Description,
-        Category:    string(helpRequest.Category),
-        Status:      string(helpRequest.Status),
-        CreatedAt:   helpRequest.CreatedAt,
-    }}
+	// Notify nearby users (radius 10km for example)
+	creator, errCreator := s.UsersRepository.GetUserByID(userID)
+	if errCreator == nil {
+		nearbyUsers, _ := s.UsersRepository.GetNearbyUsers(creator.Coordinate_lat, creator.Coordinate_long, 10000, userID)
+		for _, u := range nearbyUsers {
+			uid := u.ID
+			_ = s.NotificationRepository.CreateNotification(&models.Notifications{
+				HelpRequestID: &helpRequest.ID,
+				UserID:        &uid,
+				Title:         fmt.Sprintf("Request baru: %s", helpRequest.Title),
+				Username:      username,
+				IsRead:        false,
+				Created_at:    time.Now(),
+			})
+		}
+	}
 
-    return &dto.HelpRequestResponse{
-        Status:       http.StatusOK,
-        Message:      "Help request created successfully",
-        HelpRequests: response,
-    }, nil
+	response := []dto.HelpRequestData{{
+		ID:          helpRequest.ID,
+		Username:    helpRequest.Username,
+		UserID:      uint(helpRequest.UserID),
+		Title:       helpRequest.Title,
+		Description: helpRequest.Description,
+		Category:    string(helpRequest.Category),
+		Status:      string(helpRequest.Status),
+		CreatedAt:   helpRequest.CreatedAt,
+	}}
+
+	return &dto.HelpRequestResponse{
+		Status:       http.StatusOK,
+		Message:      "Help request created successfully",
+		HelpRequests: response,
+	}, nil
 }
 
 func (s *HelpRequestService) GetAllHelpRequests() (*dto.HelpRequestResponse, error) {
@@ -113,6 +115,7 @@ func (s *HelpRequestService) GetAllHelpRequests() (*dto.HelpRequestResponse, err
 			Description: helpRequest.Description,
 			Category:    string(helpRequest.Category),
 			Status:      string(helpRequest.Status),
+			Address:     helpRequest.Address,
 			CreatedAt:   helpRequest.CreatedAt,
 		})
 	}
@@ -174,7 +177,12 @@ func (s *HelpRequestService) UpdateHelpRequest(userID uint, helpRequestID uint, 
 		return nil, errs.InternalServerError("Failed to get help request")
 	}
 
-	if uint(helpReq.UserID) != userID {
+	Users, err := s.UsersRepository.GetUserByID(userID)
+	if err != nil {
+		return nil, errs.InternalServerError("Failed to get user")
+	}
+
+	if uint(helpReq.UserID) != userID && Users.Role != "admin" {
 		return nil, errs.Forbidden("You are not authorized to update this help request")
 	}
 
@@ -187,8 +195,8 @@ func (s *HelpRequestService) UpdateHelpRequest(userID uint, helpRequestID uint, 
 	}
 
 	if payload.Status != nil {
-		if *payload.Status != "pending" && *payload.Status != "resolved" {
-			return nil, errs.BadRequest("Status must be 'pending' or 'resolved'")
+		if *payload.Status != "pending" && *payload.Status != "solved" {
+			return nil, errs.BadRequest("Status must be 'pending' or 'solved'")
 		}
 		helpReq.Status = models.Status(*payload.Status)
 	}
@@ -257,6 +265,36 @@ func (s *HelpRequestService) GetHelpRequestByUserID(userID uint) (*dto.HelpReque
 			Status:      string(hr.Status),
 			CreatedAt:   hr.CreatedAt,
 		})
+	}
+	return response, nil
+}
+
+func (s *HelpRequestService) DeleteHelpRequest(id uint) (*dto.BasicResponse, error) {
+	messages, err := s.MessagesRepository.GetMessagesByHelpRequestID(id)
+	if err != nil {
+		return nil, errs.InternalServerError("Failed to get messages related to help request")
+	}
+
+	if len(messages) > 0 {
+		err = s.MessagesRepository.DeleteMessageByHelpRequestID(id)
+		if err != nil {
+			return nil, errs.InternalServerError("Failed to delete messages related to help request")
+		}
+	}
+
+	err = s.NotificationRepository.DeleteNotificationByHelpRequestID(id)
+	if err != nil {
+		return nil, errs.InternalServerError("Failed to delete notifications related to help request")
+	}
+
+	err = s.HelpRequestRepository.DeleteHelpRequest(id)
+	if err != nil {
+		return nil, errs.InternalServerError("Failed to delete help request")
+	}
+
+	response := &dto.BasicResponse{
+		Status:  http.StatusOK,
+		Message: "Help request deleted successfully",
 	}
 	return response, nil
 }

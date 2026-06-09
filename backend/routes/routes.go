@@ -69,18 +69,17 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 		api.GET("/health", healthController.GetStatus)
 		api.POST("/register", userController.Register)
 		api.POST("/login", userController.Login)
-		api.GET("/users", userController.GetUsers)
 		api.DELETE("/user/:id", userController.DeleteUser)
 	}
 
 	auth := r.Group("/")
-	auth.Use(middleware.AuthMiddleware())
+	auth.Use(middleware.AuthMiddleware(false))
 	{
 		// User Chatting
 		api.GET("/ws/help/:id/chat", chatController.JoinChat)
 
 		// User
-		// auth.GET("/users", userController.GetUsers)
+		auth.GET("/users", userController.GetUsers)
 		auth.GET("/user/:id", userController.GetUserByID)
 		auth.PUT("/user/:username", userController.UpdateUser)
 		auth.GET("/nearby", userController.GetNearbyUsers)
@@ -97,6 +96,20 @@ func SetupRoutes(s *contract.Service) *gin.Engine {
 		auth.GET("/notifications", notificationController.GetNotifications)
 		auth.GET("/notifications/unread-count", notificationController.GetUnreadCount)
 		auth.PUT("/notifications/read", notificationController.MarkAsRead)
+	}
+
+	adminAuth := r.Group("/")
+	adminAuth.Use(middleware.AuthMiddleware(true))
+	{
+		// User
+		adminAuth.GET("/admin/users", userController.GetUsers)
+		adminAuth.PUT("/admin/user/:username", userController.UpdateUser)
+		adminAuth.DELETE("/admin/user/:id", userController.DeleteUser)
+
+		// Help Request
+		adminAuth.GET("/admin/help", helpRequestController.GetAllHelpRequests)
+		adminAuth.PUT("/admin/help/:id", helpRequestController.UpdateHelpRequest)
+		adminAuth.DELETE("/admin/help/:id", helpRequestController.DeleteHelpRequest)
 	}
 	return r
 }

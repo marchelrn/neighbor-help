@@ -36,3 +36,10 @@ func (r *messagesRepository) SaveMessage(payload *models.Messages) error {
 	}
 	return nil
 }
+
+func (r *messagesRepository) DeleteMessageByHelpRequestID(id uint) error {
+	if err := r.db.Where("request_id = ?", id).Delete(&models.Messages{}).Error; err != nil {
+		return err
+	}
+	return nil
+}

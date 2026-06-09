@@ -203,7 +203,9 @@ class RequestCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: isActive ? const Color(0xFFE5E7EB) : accent,
+                          color: isActive
+                              ? const Color(0xFFE5E7EB)
+                              : AppColors.primary,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(

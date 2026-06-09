@@ -194,9 +194,6 @@ class _PetaAreaPageState extends State<PetaAreaPage> {
                 maxZoom: 19,
               ),
 
-              // =========================
-              // 🔥 MARKERS
-              // =========================
               MarkerLayer(
                 markers: [
                   // Draw User's center marker
@@ -254,38 +251,10 @@ class _PetaAreaPageState extends State<PetaAreaPage> {
           // =========================
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(1),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.search, size: 18),
-                          SizedBox(width: 8),
-                          Text("Cari area atau request..."),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
                   Container(
-                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
@@ -297,7 +266,6 @@ class _PetaAreaPageState extends State<PetaAreaPage> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.filter_list),
                   ),
                 ],
               ),

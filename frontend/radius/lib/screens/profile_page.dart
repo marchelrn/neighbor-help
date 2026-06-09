@@ -131,7 +131,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     const SizedBox(height: 24),
 
-                    _MenuItem(Icons.edit, "Edit Profil"),
+                    _MenuItem(Icons.edit, "Edit Profil", onTap: _showEditProfileDialog),
                     // _MenuItem(Icons.history, "Riwayat Bantuan"),
                     // _MenuItem(Icons.settings, "Pengaturan"),
                     // _MenuItem(Icons.logout, "Keluar", isLogout: true),
@@ -139,6 +139,104 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
       ),
+    );
+  }
+  void _showEditProfileDialog() {
+    if (currentUser == null) return;
+
+    final fullNameController = TextEditingController(text: currentUser!['full_name']);
+    final addressController = TextEditingController(text: currentUser!['address']);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        bool isSaving = false;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Text('Edit Profil'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: fullNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Lengkap',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: addressController,
+                    decoration: const InputDecoration(
+                      labelText: 'Alamat / Area',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(context),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          setDialogState(() => isSaving = true);
+                          try {
+                            final token = await StorageService.getToken();
+                            if (token != null) {
+                              await AuthService.updateUser(
+                                token,
+                                currentUser!['username'],
+                                {
+                                  'full_name': fullNameController.text,
+                                  'address': addressController.text,
+                                },
+                              );
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Profil berhasil diperbarui')),
+                                );
+                                _loadUser(); // Reload data
+                              }
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Gagal memperbarui profil: $e')),
+                              );
+                            }
+                          } finally {
+                            setDialogState(() => isSaving = false);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Simpan'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -238,9 +336,9 @@ class _AnimatedProfileStatState extends State<AnimatedProfileStat>
 class _MenuItem extends StatelessWidget {
   final IconData icon;
   final String title;
-  // final bool isLogout;
+  final VoidCallback onTap;
 
-  const _MenuItem(this.icon, this.title);
+  const _MenuItem(this.icon, this.title, {required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -252,7 +350,7 @@ class _MenuItem extends StatelessWidget {
         leading: Icon(icon, color: AppColors.primary),
         title: Text(title),
         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-        onTap: () {},
+        onTap: onTap,
       ),
     );
   }

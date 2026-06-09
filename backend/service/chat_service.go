@@ -67,8 +67,8 @@ func (s *chatService) ValidateChatAccess(userID uint, requestID uint) (*dto.Chat
 		return nil, errs.NotFound("Help request not found")
 	}
 
-	if helpRequest.Status == models.Resolved {
-		return nil, errs.Forbidden("This help request is already resolved")
+	if helpRequest.Status == models.Solved {
+		return nil, errs.Forbidden("This help request is already solved")
 	}
 
 	currentUser, err := s.usersRepo.GetUserByID(userID)
@@ -83,7 +83,7 @@ func (s *chatService) ValidateChatAccess(userID uint, requestID uint) (*dto.Chat
 			return nil, errs.InternalServerError("Failed to validate requester")
 		}
 
-			dist := utils.HaversineMeters(
+		dist := utils.HaversineMeters(
 			currentUser.Coordinate_lat, currentUser.Coordinate_long,
 			requester.Coordinate_lat, requester.Coordinate_long,
 		)
@@ -129,5 +129,15 @@ func (s *chatService) SaveMessage(payload *dto.CreateMessageRequest) (*dto.Saved
 		RecieverID: msg.ReceiverID,
 		Content:    msg.Content,
 		SentAt:     msg.Sent_At,
+	}, nil
+}
+
+func (s *chatService) DeleteMessage(requestID uint) (*dto.BasicResponse, error) {
+	if err := s.messagesRepo.DeleteMessageByHelpRequestID(requestID); err != nil {
+		return nil, errs.InternalServerError("Failed to delete message")
+	}
+	return &dto.BasicResponse{
+		Status:  http.StatusOK,
+		Message: "Message deleted successfully",
 	}, nil
 }

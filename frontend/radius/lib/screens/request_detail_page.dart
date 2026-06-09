@@ -101,7 +101,10 @@ class RequestDetailPage extends StatelessWidget {
                   const SizedBox(width: 10),
                   Text(
                     time,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                   const Spacer(),
                   const Icon(Icons.flag_outlined, size: 16),
@@ -194,16 +197,6 @@ class RequestDetailPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: onAmbil,
-                          icon: const Icon(Icons.check),
-                          label: const Text("Bantu"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: accent,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ],
@@ -278,6 +271,4 @@ class RequestDetailPage extends StatelessWidget {
       ),
     );
   }
-
-
 }

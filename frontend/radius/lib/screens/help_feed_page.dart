@@ -97,11 +97,17 @@ class _HelpFeedPageState extends State<HelpFeedPage> {
   Widget build(BuildContext context) {
     List<dynamic> filteredRequests = helpRequestsList;
     if (selectedFilter == "Aktif") {
-      filteredRequests = filteredRequests.where((req) => req["status"] == "pending").toList();
+      filteredRequests = filteredRequests
+          .where((req) => req["status"] == "pending")
+          .toList();
     } else if (selectedFilter == "Selesai") {
-      filteredRequests = filteredRequests.where((req) => req["status"] == "solved").toList();
+      filteredRequests = filteredRequests
+          .where((req) => req["status"] == "solved")
+          .toList();
     } else if (selectedFilter == "Urgent") {
-      filteredRequests = filteredRequests.where((req) => req["category"] == "urgent").toList();
+      filteredRequests = filteredRequests
+          .where((req) => req["category"] == "urgent")
+          .toList();
     }
 
     return SafeArea(
@@ -140,29 +146,6 @@ class _HelpFeedPageState extends State<HelpFeedPage> {
                         ),
 
                         const SizedBox(height: 14),
-
-                        // 🔹 SEARCH BAR
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF9FAFB),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.search, size: 18),
-                              SizedBox(width: 8),
-                              Text(
-                                "Cari bantuan...",
-                                style: TextStyle(fontSize: 13),
-                              ),
-                            ],
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -177,10 +160,28 @@ class _HelpFeedPageState extends State<HelpFeedPage> {
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
-                        _FilterChip("Semua", selectedFilter == "Semua", onTap: () => setState(() => selectedFilter = "Semua")),
-                        _FilterChip("Aktif", selectedFilter == "Aktif", onTap: () => setState(() => selectedFilter = "Aktif")),
-                        _FilterChip("Selesai", selectedFilter == "Selesai", onTap: () => setState(() => selectedFilter = "Selesai")),
-                        _FilterChip("Urgent", selectedFilter == "Urgent", onTap: () => setState(() => selectedFilter = "Urgent")),
+                        _FilterChip(
+                          "Semua",
+                          selectedFilter == "Semua",
+                          onTap: () => setState(() => selectedFilter = "Semua"),
+                        ),
+                        _FilterChip(
+                          "Aktif",
+                          selectedFilter == "Aktif",
+                          onTap: () => setState(() => selectedFilter = "Aktif"),
+                        ),
+                        _FilterChip(
+                          "Selesai",
+                          selectedFilter == "Selesai",
+                          onTap: () =>
+                              setState(() => selectedFilter = "Selesai"),
+                        ),
+                        _FilterChip(
+                          "Urgent",
+                          selectedFilter == "Urgent",
+                          onTap: () =>
+                              setState(() => selectedFilter = "Urgent"),
+                        ),
                       ],
                     ),
                   ),
@@ -235,7 +236,9 @@ class _HelpFeedPageState extends State<HelpFeedPage> {
                     )
                   else ...[
                     // 🔹 ACTIVE REQUESTS
-                    if (filteredRequests.where((req) => req["status"] == "pending").isNotEmpty) ...[
+                    if (filteredRequests
+                        .where((req) => req["status"] == "pending")
+                        .isNotEmpty) ...[
                       Column(
                         children: filteredRequests
                             .where((req) => req["status"] == "pending")
@@ -281,7 +284,9 @@ class _HelpFeedPageState extends State<HelpFeedPage> {
                     ],
 
                     // 🔹 COMPLETED REQUESTS
-                    if (filteredRequests.where((req) => req["status"] == "solved").isNotEmpty) ...[
+                    if (filteredRequests
+                        .where((req) => req["status"] == "solved")
+                        .isNotEmpty) ...[
                       const Row(
                         children: [
                           Text(
@@ -367,22 +372,22 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: selected ? AppColors.primary : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: selected ? AppColors.primary : const Color(0xFFE5E7EB),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? AppColors.primary : const Color(0xFFE5E7EB),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.black,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: selected ? Colors.white : Colors.black,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    ),
     );
   }
 }

@@ -181,3 +181,7 @@ func parseRequestIDParam(c *gin.Context) (uint, error) {
 
 	return uint(requestIDInt), nil
 }
+
+func (h *ChatController) DeleteMessage(c *gin.Context) {
+
+}

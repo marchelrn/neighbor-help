@@ -5,7 +5,7 @@ import '../services/auth_service.dart';
 import '../utils/storage.dart';
 import 'main_layout.dart';
 import 'register_page.dart';
-import 'admin/pages/admin_dashboard_page.dart';
+import 'admin/admin_main_layout.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -76,7 +76,7 @@ class _LoginPageState extends State<LoginPage> {
       if (role == 'admin') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const AdminDashboardPage()),
+          MaterialPageRoute(builder: (_) => const AdminMainLayout()),
         );
       } else {
         Navigator.pushReplacement(

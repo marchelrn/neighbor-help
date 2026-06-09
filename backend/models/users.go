@@ -8,6 +8,7 @@ type Users struct {
 	Address         string  `gorm:"column:address;type:varchar(255);not null"`
 	Coordinate_lat  float64 `gorm:"column:coordinate_lat;type:float;not null"`
 	Coordinate_long float64 `gorm:"column:coordinate_long;type:float;not null"`
+	Role            string  `gorm:"column:role;type:varchar(255);not null;default:'user'"`
 }
 
 func (Users) TableName() string {

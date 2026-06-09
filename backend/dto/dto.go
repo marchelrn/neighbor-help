@@ -9,6 +9,7 @@ type UsersRequest struct {
 	Password        string  `json:"password"`
 	FullName        string  `json:"full_name"`
 	Address         string  `json:"address"`
+	Role            string  `json:"role"`
 	Coordinate_lat  float64 `json:"coordinate_lat"`
 	Coordinate_long float64 `json:"coordinate_long"`
 	Actual_lat      float64 `json:"actual_lat"`
@@ -20,6 +21,7 @@ type UpdateUserRequest struct {
 	Password        *string  `json:"password"`
 	FullName        *string  `json:"full_name"`
 	Address         *string  `json:"address"`
+	Role            *string  `json:"role"`
 	Coordinate_lat  *float64 `json:"coordinate_lat"`
 	Coordinate_long *float64 `json:"coordinate_long"`
 }
@@ -29,6 +31,7 @@ type UsersData struct {
 	Username        string  `json:"username"`
 	FullName        string  `json:"full_name"`
 	Address         string  `json:"address"`
+	Role            string  `json:"role"`
 	Coordinate_lat  float64 `json:"coordinate_lat"`
 	Coordinate_long float64 `json:"coordinate_long"`
 }
@@ -99,6 +102,7 @@ type HelpRequestData struct {
 	Description string    `json:"description"`
 	Category    string    `json:"category"`
 	Status      string    `json:"status"`
+	Address     string    `json:"address"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
@@ -131,13 +135,13 @@ type NearbyHelpRequestResponse struct {
 // Messages / chat
 
 type MessageData struct {
-	ID         uint      `json:"id"`
+	ID             uint      `json:"id"`
 	RequestID      uint      `json:"request_id"`
 	SenderID       uint      `json:"sender_id"`
 	SenderUsername string    `json:"sender_username"`
 	RecieverID     uint      `json:"reciever_id"`
-	Content    string    `json:"content"`
-	SentAt     time.Time `json:"created_at"`
+	Content        string    `json:"content"`
+	SentAt         time.Time `json:"created_at"`
 }
 
 type MessageResponse struct {

@@ -24,7 +24,11 @@ func (r *helpRequestRepository) CreateHelpRequest(payload *models.HelpRequest) e
 
 func (r *helpRequestRepository) GetAllHelpRequests() ([]*models.HelpRequest, error) {
 	var helpRequests []*models.HelpRequest
-	if err := r.db.Find(&helpRequests).Error; err != nil {
+	if err := r.db.
+		Table("help_requests").
+		Select("help_requests.*, users.username AS username, users.address AS address").
+		Joins("JOIN users ON users.id = help_requests.user_id").
+		Find(&helpRequests).Error; err != nil {
 		return nil, err
 	}
 	return helpRequests, nil
@@ -35,7 +39,7 @@ func (r *helpRequestRepository) GetHelpRequestByUserID(id uint) ([]*models.HelpR
 
 	if err := r.db.
 		Table("help_requests").
-		Select("help_requests.*, users.username AS username").
+		Select("help_requests.*, users.username AS username, users.address AS address").
 		Joins("JOIN users ON users.id = help_requests.user_id").
 		Where("help_requests.user_id = ?", id).
 		Find(&helpRequests).Error; err != nil {
@@ -99,4 +103,8 @@ func (r *helpRequestRepository) GetNearbyHelpRequests(lat, lon float64, excludeU
 		return nil, err
 	}
 	return helpRequests, nil
+}
+
+func (r *helpRequestRepository) DeleteHelpRequest(id uint) error {
+	return r.db.Where("id = ?", id).Delete(&models.HelpRequest{}).Error
 }
